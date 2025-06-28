@@ -1,20 +1,21 @@
 # LogLion
 
-LogLion is a Go-based CLI tool that analyzes logcat files to validate analytics event funnels for automated testing.
+LogLion is a Go-based CLI tool that analyzes log files to validate analytics event funnels for automated testing.
 
 ## Overview
 
-LogLion helps you track user conversion funnels by parsing logcat files and checking if users complete expected
-sequences of analytics events. This is particularly useful for automated testing of mobile applications where you need
+LogLion helps you track user conversion funnels by parsing various log file formats and checking if users complete expected
+sequences of analytics events. This is particularly useful for automated testing of applications where you need
 to validate that analytics events are being fired correctly throughout user journeys.
 
 ## Features
 
-- **Logcat parsing**: Parse logcat files with support for plain text and JSON formats
+- **Flexible log parsing**: Parse various log formats including logcat, oslog, and simple text files
 - **Funnel analysis**: Track multi-step user conversion funnels
 - **Flexible configuration**: YAML-based configuration for defining funnels and steps
 - **Multiple output formats**: Text and JSON output formats
 - **Pattern matching**: Regex-based event pattern matching with property validation
+- **Configurable parsing**: Support for custom log formats through configuration without code changes
 
 ## Installation
 
@@ -36,26 +37,27 @@ go install
 
 ```yaml
 version: "1.0"
-format: "logcat-plain"
+format: "plain"
 
 funnel:
   name: "Purchase Flow"
 
   steps:
     - name: "Product View"
-      event_pattern: "analytics.*page_view"
-      required_properties:
-        page: "/product"
+      event_pattern: "page_view"
 
     - name: "Add to Cart"
-      event_pattern: "analytics.*add_to_cart"
-      required_properties:
-        product_id: ".*"
+      event_pattern: "add_to_cart"
 
     - name: "Purchase"
-      event_pattern: "analytics.*purchase"
-      required_properties:
-        transaction_id: ".*"
+      event_pattern: "purchase"
+
+# Configure parser for logcat-style logs
+log_parser:
+  timestamp_format: "01-02 15:04:05.000"
+  event_regex: ".*Analytics: (.*)"
+  json_extraction: true
+  log_line_regex: "^(\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3})\\s+(\\d+)\\s+(\\d+)\\s+([VDIWEFS])\\s+([^:]+):\\s*(.*)$"
 ```
 
 2. **Analyze your log file**:
@@ -78,7 +80,7 @@ loglion analyze --config funnel.yaml --log logcat.txt [flags]
 
 - `--config, -c`: Path to funnel configuration file (required)
 - `--log, -l`: Path to log file (required)
-- `--format, -f`: Log format preset (default: "logcat-plain")
+- `--format, -f`: Log format preset (default: "plain")
 - `--output, -o`: Output format (json, text) (default: "text")
 - `--timeout, -t`: Session timeout in minutes (default: 30)
 
@@ -105,8 +107,8 @@ The configuration file defines how LogLion should parse logs and what constitute
 ### Basic Structure
 
 ```yaml
-version: "1.0"           # Configuration version
-format: "logcat-plain"        # Log format preset
+version: "1.0"    # Configuration version
+format: "plain"   # Log format (plain, logcat-json)
 
 funnel:
   name: "My Funnel"                    # Descriptive name
@@ -120,19 +122,45 @@ funnel:
 
 ### Log Parser Configuration
 
+The `plain` format supports flexible configuration for different log types:
+
 ```yaml
 log_parser:
-  timestamp_format: "01-02 15:04:05.000"    # Timestamp parsing format
-  event_regex: ".*Analytics.*: (.*)"         # Regex to extract event data
-  json_extraction: true                      # Parse JSON from log lines
+  timestamp_format: "01-02 15:04:05.000"     # Go time format (empty = no timestamp parsing)
+  event_regex: ".*Analytics: (.*)"           # Regex to extract event data from message
+  json_extraction: true                      # Parse JSON from extracted event data
+  log_line_regex: "^(.*)$"                   # Regex to parse the entire log line (default: match everything)
+
+# Example configurations:
+
+# Simple text logs (just event names per line):
+log_parser:
+  event_regex: "^(.*)$"
+
+# Logcat format:
+log_parser:
+  timestamp_format: "01-02 15:04:05.000"
+  event_regex: ".*Analytics: (.*)"
+  json_extraction: true
+  log_line_regex: "^(\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3})\\s+(\\d+)\\s+(\\d+)\\s+([VDIWEFS])\\s+([^:]+):\\s*(.*)$"
+
+# OSLog format:
+log_parser:
+  timestamp_format: "2006-01-02 15:04:05.000000-0700"
+  event_regex: "Analytics: (.*)"
+  json_extraction: true
+  log_line_regex: "^(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{6}-\\d{4})\\s+(.*)$"
 ```
 
 ## Examples
 
 See the `examples/` directory for:
 
-- `funnel.yaml`: Example funnel configuration
-- `sample_logcat.txt`: Sample Android logcat file
+- `simple_funnel.yaml`: Simple text log configuration
+- `logcat_plain_funnel.yaml`: Logcat format configuration  
+- `oslog_funnel.yaml`: macOS oslog format configuration
+- `sample_simple.txt`: Simple text log sample
+- `sample_logcat_plain.txt`: Sample Android logcat file
 
 ## License
 

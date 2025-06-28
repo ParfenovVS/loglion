@@ -31,6 +31,7 @@ type LogParser struct {
 	TimestampFormat string `yaml:"timestamp_format"`
 	EventRegex      string `yaml:"event_regex"`
 	JSONExtraction  bool   `yaml:"json_extraction"`
+	LogLineRegex    string `yaml:"log_line_regex"`
 }
 
 func LoadConfig(filepath string) (*Config, error) {
@@ -93,19 +94,19 @@ func (c *Config) Validate() error {
 	logrus.WithField("version", c.Version).Debug("Version validation passed")
 
 	if c.Format == "" {
-		c.Format = "logcat-plain" // Default to logcat-plain format
-		logrus.Debug("Format not specified, defaulting to 'logcat-plain'")
+		c.Format = "plain" // Default to plain format
+		logrus.Debug("Format not specified, defaulting to 'plain'")
 	}
 
-	// Backward compatibility: map 'android' to 'logcat-plain'
-	if c.Format == "android" {
-		c.Format = "logcat-plain"
-		logrus.Debug("Format 'android' mapped to 'logcat-plain' for backward compatibility")
+	// Backward compatibility: map 'android' and 'logcat-plain' to 'plain'
+	if c.Format == "android" || c.Format == "logcat-plain" {
+		c.Format = "plain"
+		logrus.Debug("Format mapped to 'plain' for backward compatibility")
 	}
 
-	if c.Format != "logcat-plain" && c.Format != "logcat-json" {
+	if c.Format != "plain" && c.Format != "logcat-json" {
 		logrus.WithField("format", c.Format).Error("Unsupported format")
-		return fmt.Errorf("unsupported format: %s (supported formats: 'logcat-plain', 'logcat-json')", c.Format)
+		return fmt.Errorf("unsupported format: %s (supported formats: 'plain', 'logcat-json')", c.Format)
 	}
 	logrus.WithField("format", c.Format).Debug("Format validation passed")
 
@@ -194,16 +195,36 @@ func (c *Config) validateStep(index int, step Step, stepNames map[string]bool) e
 }
 
 func (c *Config) validateLogParser() error {
-	if c.LogParser.TimestampFormat == "" {
-		c.LogParser.TimestampFormat = "01-02 15:04:05.000" // Default format
-		logrus.Debug("Timestamp format not specified, using default")
-	}
-	logrus.WithField("timestamp_format", c.LogParser.TimestampFormat).Debug("Timestamp format validation passed")
+	// Set defaults based on format
+	if c.Format == "plain" {
+		if c.LogParser.TimestampFormat == "" {
+			c.LogParser.TimestampFormat = "" // No default timestamp for plain format
+			logrus.Debug("Timestamp format not specified for plain format, leaving empty")
+		}
 
-	if c.LogParser.EventRegex == "" {
-		c.LogParser.EventRegex = ".*Analytics: (.*)" // Default regex
-		logrus.Debug("Event regex not specified, using default")
+		if c.LogParser.EventRegex == "" {
+			c.LogParser.EventRegex = "^(.*)$" // Default: entire line as event
+			logrus.Debug("Event regex not specified, using default for plain format")
+		}
+
+		if c.LogParser.LogLineRegex == "" {
+			c.LogParser.LogLineRegex = "^(.*)$" // Default: entire line
+			logrus.Debug("Log line regex not specified, using default for plain format")
+		}
+	} else {
+		// For logcat-json, use legacy defaults
+		if c.LogParser.TimestampFormat == "" {
+			c.LogParser.TimestampFormat = "01-02 15:04:05.000"
+			logrus.Debug("Timestamp format not specified, using default")
+		}
+
+		if c.LogParser.EventRegex == "" {
+			c.LogParser.EventRegex = ".*Analytics: (.*)"
+			logrus.Debug("Event regex not specified, using default")
+		}
 	}
+
+	logrus.WithField("timestamp_format", c.LogParser.TimestampFormat).Debug("Timestamp format validation passed")
 
 	logrus.WithField("event_regex", c.LogParser.EventRegex).Debug("Validating event regex pattern")
 	if _, err := regexp.Compile(c.LogParser.EventRegex); err != nil {
@@ -211,9 +232,18 @@ func (c *Config) validateLogParser() error {
 		return fmt.Errorf("invalid event_regex: %w", err)
 	}
 
+	if c.LogParser.LogLineRegex != "" {
+		logrus.WithField("log_line_regex", c.LogParser.LogLineRegex).Debug("Validating log line regex pattern")
+		if _, err := regexp.Compile(c.LogParser.LogLineRegex); err != nil {
+			logrus.WithError(err).WithField("log_line_regex", c.LogParser.LogLineRegex).Error("Invalid log line regex pattern")
+			return fmt.Errorf("invalid log_line_regex: %w", err)
+		}
+	}
+
 	logrus.WithFields(logrus.Fields{
 		"timestamp_format": c.LogParser.TimestampFormat,
 		"event_regex":      c.LogParser.EventRegex,
+		"log_line_regex":   c.LogParser.LogLineRegex,
 		"json_extraction":  c.LogParser.JSONExtraction,
 	}).Debug("Log parser validation completed successfully")
 

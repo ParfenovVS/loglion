@@ -1,0 +1,10 @@
+event_1
+some other log line
+event_2
+another unrelated line
+event_1
+event_2
+event_3
+random log content
+event_1
+event_2

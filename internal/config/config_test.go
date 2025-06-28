@@ -248,14 +248,14 @@ func TestConfigValidateDefaults(t *testing.T) {
 	}
 
 	// Check defaults were applied
-	if config.Format != "logcat-plain" {
-		t.Errorf("Expected default format 'logcat-plain', got: %s", config.Format)
+	if config.Format != "plain" {
+		t.Errorf("Expected default format 'plain', got: %s", config.Format)
 	}
-	if config.LogParser.TimestampFormat != "01-02 15:04:05.000" {
-		t.Errorf("Expected default timestamp format, got: %s", config.LogParser.TimestampFormat)
+	if config.LogParser.TimestampFormat != "" {
+		t.Errorf("Expected default timestamp format to be empty for plain format, got: %s", config.LogParser.TimestampFormat)
 	}
-	if config.LogParser.EventRegex != ".*Analytics: (.*)" {
-		t.Errorf("Expected default event regex, got: %s", config.LogParser.EventRegex)
+	if config.LogParser.EventRegex != "^(.*)$" {
+		t.Errorf("Expected default event regex for plain format, got: %s", config.LogParser.EventRegex)
 	}
 }
 
@@ -323,8 +323,8 @@ func TestBackwardCompatibility(t *testing.T) {
 		t.Errorf("Expected no error with backward compatible config, got: %v", err)
 	}
 
-	// Check that 'android' format was mapped to 'logcat-plain'
-	if config.Format != "logcat-plain" {
-		t.Errorf("Expected 'android' format to be mapped to 'logcat-plain', got: %s", config.Format)
+	// Check that 'android' format was mapped to 'plain'
+	if config.Format != "plain" {
+		t.Errorf("Expected 'android' format to be mapped to 'plain', got: %s", config.Format)
 	}
 }

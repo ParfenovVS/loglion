@@ -13,9 +13,9 @@ func TestLogFormat_String(t *testing.T) {
 		want   string
 	}{
 		{
-			name:   "logcat plain format",
-			format: LogcatPlainFormat,
-			want:   "logcat-plain",
+			name:   "plain format",
+			format: PlainFormat,
+			want:   "plain",
 		},
 		{
 			name:   "logcat json format",
@@ -81,9 +81,9 @@ func TestNewParser(t *testing.T) {
 		want   string // We'll check the type name as string since we can't directly compare interface types
 	}{
 		{
-			name:   "logcat plain format",
-			format: LogcatPlainFormat,
-			want:   "*parser.LogcatPlainParser",
+			name:   "plain format",
+			format: PlainFormat,
+			want:   "*parser.PlainParser",
 		},
 		{
 			name:   "logcat json format",
@@ -93,12 +93,12 @@ func TestNewParser(t *testing.T) {
 		{
 			name:   "unknown format defaults to plain",
 			format: LogFormat("unknown"),
-			want:   "*parser.LogcatPlainParser",
+			want:   "*parser.PlainParser",
 		},
 		{
 			name:   "empty format defaults to plain",
 			format: LogFormat(""),
-			want:   "*parser.LogcatPlainParser",
+			want:   "*parser.PlainParser",
 		},
 	}
 
@@ -125,15 +125,17 @@ func TestNewParserWithConfig(t *testing.T) {
 		timestampFormat string
 		eventRegex      string
 		jsonExtraction  bool
+		logLineRegex    string
 		want            string
 	}{
 		{
-			name:            "logcat plain with custom config",
-			format:          LogcatPlainFormat,
+			name:            "plain with custom config",
+			format:          PlainFormat,
 			timestampFormat: "01-02 15:04:05.000",
 			eventRegex:      `.*Analytics.*: (.*)`,
 			jsonExtraction:  true,
-			want:            "*parser.LogcatPlainParser",
+			logLineRegex:    `^(.*)$`,
+			want:            "*parser.PlainParser",
 		},
 		{
 			name:            "logcat json with custom config",
@@ -141,6 +143,7 @@ func TestNewParserWithConfig(t *testing.T) {
 			timestampFormat: "01-02 15:04:05.000",
 			eventRegex:      `.*Analytics.*: (.*)`,
 			jsonExtraction:  false,
+			logLineRegex:    "",
 			want:            "*parser.LogcatJSONParser",
 		},
 		{
@@ -149,13 +152,14 @@ func TestNewParserWithConfig(t *testing.T) {
 			timestampFormat: "01-02 15:04:05.000",
 			eventRegex:      `.*Test.*: (.*)`,
 			jsonExtraction:  true,
-			want:            "*parser.LogcatPlainParser",
+			logLineRegex:    `^(.*)$`,
+			want:            "*parser.PlainParser",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			parser := NewParserWithConfig(tt.format, tt.timestampFormat, tt.eventRegex, tt.jsonExtraction)
+			parser := NewParserWithConfig(tt.format, tt.timestampFormat, tt.eventRegex, tt.jsonExtraction, tt.logLineRegex)
 			if parser == nil {
 				t.Errorf("NewParserWithConfig() returned nil")
 				return
@@ -172,7 +176,7 @@ func TestNewParserWithConfig(t *testing.T) {
 func TestParser_Interface(t *testing.T) {
 	// Test that returned parsers implement the Parser interface
 	formats := []LogFormat{
-		LogcatPlainFormat,
+		PlainFormat,
 		LogcatJSONFormat,
 	}
 
@@ -208,8 +212,8 @@ func TestParser_Interface(t *testing.T) {
 
 func TestLogFormat_Constants(t *testing.T) {
 	// Test that constants have expected values
-	if LogcatPlainFormat != "logcat-plain" {
-		t.Errorf("LogcatPlainFormat = %v, want %v", LogcatPlainFormat, "logcat-plain")
+	if PlainFormat != "plain" {
+		t.Errorf("PlainFormat = %v, want %v", PlainFormat, "plain")
 	}
 	if LogcatJSONFormat != "logcat-json" {
 		t.Errorf("LogcatJSONFormat = %v, want %v", LogcatJSONFormat, "logcat-json")

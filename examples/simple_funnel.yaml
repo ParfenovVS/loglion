@@ -1,0 +1,21 @@
+# Example funnel configuration for simple text log format
+version: "1.0"  
+format: "plain"
+
+funnel:
+  name: "Simple Event Flow"
+
+  steps:
+    - name: "Event 1"
+      event_pattern: "event_1"
+
+    - name: "Event 2" 
+      event_pattern: "event_2"
+
+    - name: "Event 3"
+      event_pattern: "event_3"
+
+# Minimal configuration - treats each line as an event
+log_parser:
+  event_regex: "^(.*)$"  # Entire line is the event data
+  json_extraction: false # No JSON parsing needed

@@ -1,0 +1,23 @@
+# Example funnel configuration for macOS oslog format
+version: "1.0"
+format: "plain"
+
+funnel:
+  name: "App Launch Flow"
+
+  steps:
+    - name: "App Launch"
+      event_pattern: "app_launch"
+
+    - name: "View Load"  
+      event_pattern: "view_load"
+
+    - name: "User Action"
+      event_pattern: "user_action"
+
+# Configuration for oslog format parsing
+log_parser:
+  timestamp_format: "2006-01-02 15:04:05.000000-0700"  # oslog timestamp format
+  event_regex: "Analytics: (.*)"                        # Extract analytics events
+  json_extraction: true                                 # Try to parse JSON from event data
+  log_line_regex: "^(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{6}-\\d{4})\\s+.*\\s+.*\\s+.*\\s+(\\d+)\\s+.*\\s+.*:\\s+.*:\\s+(.*)$"

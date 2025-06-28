@@ -22,28 +22,28 @@ type Parser interface {
 type LogFormat string
 
 const (
-	LogcatPlainFormat LogFormat = "logcat-plain"
-	LogcatJSONFormat  LogFormat = "logcat-json"
+	PlainFormat      LogFormat = "plain"
+	LogcatJSONFormat LogFormat = "logcat-json"
 )
 
 func NewParser(format LogFormat) Parser {
 	switch format {
-	case LogcatPlainFormat:
-		return NewLogcatPlainParser()
+	case PlainFormat:
+		return NewPlainParser()
 	case LogcatJSONFormat:
 		return NewLogcatJSONParser()
 	default:
-		return NewLogcatPlainParser() // Default to plain logcat
+		return NewPlainParser() // Default to plain
 	}
 }
 
-func NewParserWithConfig(format LogFormat, timestampFormat, eventRegex string, jsonExtraction bool) Parser {
+func NewParserWithConfig(format LogFormat, timestampFormat, eventRegex string, jsonExtraction bool, logLineRegex string) Parser {
 	switch format {
-	case LogcatPlainFormat:
-		return NewLogcatPlainParserWithConfig(timestampFormat, eventRegex, jsonExtraction)
+	case PlainFormat:
+		return NewPlainParserWithConfig(timestampFormat, eventRegex, jsonExtraction, logLineRegex)
 	case LogcatJSONFormat:
 		return NewLogcatJSONParserWithConfig(timestampFormat, eventRegex, jsonExtraction)
 	default:
-		return NewLogcatPlainParserWithConfig(timestampFormat, eventRegex, jsonExtraction) // Default to plain logcat
+		return NewPlainParserWithConfig(timestampFormat, eventRegex, jsonExtraction, logLineRegex) // Default to plain
 	}
 }

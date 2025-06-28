@@ -19,7 +19,7 @@ var analyzeCmd = &cobra.Command{
 and outputs completion rates and drop-off analysis.
 
 Examples:
-  loglion analyze --config funnel.yaml --log logcat.txt --format logcat-plain
+  loglion analyze --config funnel.yaml --log logcat.txt --format plain
   loglion analyze -c funnel.yaml -l logcat.txt -f logcat-json --max 5`,
 	Run: func(cmd *cobra.Command, args []string) {
 		configFile, _ := cmd.Flags().GetString("config")
@@ -65,21 +65,23 @@ Examples:
 		var logParser parser.Parser
 
 		switch format {
-		case "logcat-plain":
+		case "plain":
 			logParser = parser.NewParserWithConfig(
-				parser.LogcatPlainFormat,
+				parser.PlainFormat,
 				cfg.LogParser.TimestampFormat,
 				cfg.LogParser.EventRegex,
-				cfg.LogParser.JSONExtraction)
+				cfg.LogParser.JSONExtraction,
+				cfg.LogParser.LogLineRegex)
 		case "logcat-json":
 			logParser = parser.NewParserWithConfig(
 				parser.LogcatJSONFormat,
 				cfg.LogParser.TimestampFormat,
 				cfg.LogParser.EventRegex,
-				cfg.LogParser.JSONExtraction)
+				cfg.LogParser.JSONExtraction,
+				"") // Empty log line regex for JSON format
 		default:
 			logrus.WithField("format", format).Error("Unsupported log format")
-			fmt.Fprintf(os.Stderr, "Unsupported format: %s (supported: logcat-plain, logcat-json)\n", format)
+			fmt.Fprintf(os.Stderr, "Unsupported format: %s (supported: plain, logcat-json)\n", format)
 			os.Exit(1)
 		}
 
@@ -127,7 +129,7 @@ func init() {
 
 	analyzeCmd.Flags().StringP("config", "c", "", "Path to funnel configuration file (required)")
 	analyzeCmd.Flags().StringP("log", "l", "", "Path to log file (required)")
-	analyzeCmd.Flags().StringP("format", "f", "logcat-plain", "Log format (logcat-plain, logcat-json)")
+	analyzeCmd.Flags().StringP("format", "f", "plain", "Log format (plain, logcat-json)")
 	analyzeCmd.Flags().StringP("output", "o", "text", "Output format (json, text)")
 	analyzeCmd.Flags().IntP("max", "m", 0, "Maximum number of funnels to analyze (0 = analyze all events)")
 

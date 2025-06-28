@@ -13,109 +13,136 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type LogcatPlainParser struct {
+type PlainParser struct {
 	timestampFormat string
 	eventRegex      *regexp.Regexp
 	jsonExtraction  bool
 	logLineRegex    *regexp.Regexp
 }
 
-func NewLogcatPlainParser() *LogcatPlainParser {
-	return NewLogcatPlainParserWithConfig("01-02 15:04:05.000", `.*Analytics: (.*)`, true)
+func NewPlainParser() *PlainParser {
+	return NewPlainParserWithConfig("", `^(.*)$`, false, `^(.*)$`)
 }
 
-func NewLogcatPlainParserWithConfig(timestampFormat, eventRegexPattern string, jsonExtraction bool) *LogcatPlainParser {
+func NewPlainParserWithConfig(timestampFormat, eventRegexPattern string, jsonExtraction bool, logLineRegexPattern string) *PlainParser {
 	logrus.WithFields(logrus.Fields{
-		"timestamp_format":    timestampFormat,
-		"event_regex_pattern": eventRegexPattern,
-		"json_extraction":     jsonExtraction,
-	}).Debug("Creating new LogcatPlain parser")
+		"timestamp_format":       timestampFormat,
+		"event_regex_pattern":    eventRegexPattern,
+		"json_extraction":        jsonExtraction,
+		"log_line_regex_pattern": logLineRegexPattern,
+	}).Debug("Creating new Plain parser")
 
-	// Default regex if empty
+	// Default regex patterns if empty
 	if eventRegexPattern == "" {
-		eventRegexPattern = `.*Analytics: (.*)`
+		eventRegexPattern = `^(.*)$`
 		logrus.Debug("Using default event regex pattern")
 	}
 
-	// Default timestamp format if empty
-	if timestampFormat == "" {
-		timestampFormat = "01-02 15:04:05.000"
-		logrus.Debug("Using default timestamp format")
+	if logLineRegexPattern == "" {
+		logLineRegexPattern = `^(.*)$`
+		logrus.Debug("Using default log line regex pattern")
 	}
 
 	// Compile event regex
 	logrus.WithField("pattern", eventRegexPattern).Debug("Compiling event regex")
 	eventRegex := regexp.MustCompile(eventRegexPattern)
 
-	// Regex to parse the full logcat line format
-	logLineRegex := regexp.MustCompile(`^(\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})\s+(\d+)\s+(\d+)\s+([VDIWEFS])\s+([^:]+):\s*(.*)$`)
+	// Compile log line regex
+	logrus.WithField("pattern", logLineRegexPattern).Debug("Compiling log line regex")
+	logLineRegex := regexp.MustCompile(logLineRegexPattern)
 
-	parser := &LogcatPlainParser{
+	parser := &PlainParser{
 		timestampFormat: timestampFormat,
 		eventRegex:      eventRegex,
 		jsonExtraction:  jsonExtraction,
 		logLineRegex:    logLineRegex,
 	}
 
-	logrus.Debug("LogcatPlain parser created successfully")
+	logrus.Debug("Plain parser created successfully")
 	return parser
 }
 
-func (p *LogcatPlainParser) Parse(logLine string) (*LogEntry, error) {
-	logrus.WithField("log_line", logLine).Debug("Parsing LogcatPlain log line")
+func (p *PlainParser) Parse(logLine string) (*LogEntry, error) {
+	logrus.WithField("log_line", logLine).Debug("Parsing Plain log line")
 
-	// Use regex to parse the logcat line
-	matches := p.logLineRegex.FindStringSubmatch(strings.TrimSpace(logLine))
-	if len(matches) != 7 {
+	// Check for empty lines
+	trimmedLine := strings.TrimSpace(logLine)
+	if trimmedLine == "" {
+		logrus.WithField("log_line", logLine).Debug("Empty log line")
+		return nil, fmt.Errorf("empty log line")
+	}
+
+	// Use regex to parse the log line
+	matches := p.logLineRegex.FindStringSubmatch(trimmedLine)
+	if len(matches) == 0 {
 		logrus.WithField("log_line", logLine).Debug("Log line does not match expected format")
 		return nil, fmt.Errorf("invalid log line format: %s", logLine)
 	}
 
-	// Extract components from regex groups
-	timestampStr := matches[1]
-	pidStr := matches[2]
-	tidStr := matches[3]
-	level := matches[4]
-	tag := matches[5]
-	message := matches[6]
+	// Initialize entry with defaults
+	entry := &LogEntry{
+		Timestamp: time.Time{}, // Zero time if no timestamp
+		Level:     "",
+		Tag:       "",
+		PID:       0,
+		TID:       0,
+		Message:   "",
+	}
+
+	// Extract fields based on available regex groups
+	// Groups are in order: timestamp, pid, tid, level, tag, message
+	if len(matches) > 1 && matches[1] != "" && p.timestampFormat != "" {
+		// Try to parse timestamp if format is provided
+		if timestamp, err := time.Parse(p.timestampFormat, matches[1]); err == nil {
+			entry.Timestamp = timestamp
+			logrus.WithField("timestamp", timestamp).Debug("Parsed timestamp")
+		} else {
+			logrus.WithError(err).WithField("timestamp_str", matches[1]).Debug("Failed to parse timestamp, using as message")
+			entry.Message = matches[1]
+		}
+	}
+
+	if len(matches) > 2 && matches[2] != "" {
+		// Try to parse PID
+		if pid, err := strconv.Atoi(matches[2]); err == nil {
+			entry.PID = pid
+		} else {
+			logrus.WithError(err).WithField("pid_str", matches[2]).Debug("Failed to parse PID")
+		}
+	}
+
+	if len(matches) > 3 && matches[3] != "" {
+		// Try to parse TID
+		if tid, err := strconv.Atoi(matches[3]); err == nil {
+			entry.TID = tid
+		} else {
+			logrus.WithError(err).WithField("tid_str", matches[3]).Debug("Failed to parse TID")
+		}
+	}
+
+	if len(matches) > 4 && matches[4] != "" {
+		entry.Level = matches[4]
+	}
+
+	if len(matches) > 5 && matches[5] != "" {
+		entry.Tag = matches[5]
+	}
+
+	if len(matches) > 6 && matches[6] != "" {
+		entry.Message = matches[6]
+	} else if len(matches) > 1 && entry.Message == "" {
+		// If no specific message group, use the last captured group
+		entry.Message = matches[len(matches)-1]
+	}
 
 	logrus.WithFields(logrus.Fields{
-		"timestamp": timestampStr,
-		"pid":       pidStr,
-		"tid":       tidStr,
-		"level":     level,
-		"tag":       tag,
-		"message":   message,
+		"timestamp": entry.Timestamp,
+		"pid":       entry.PID,
+		"tid":       entry.TID,
+		"level":     entry.Level,
+		"tag":       entry.Tag,
+		"message":   entry.Message,
 	}).Debug("Extracted log line components")
-
-	// Parse timestamp
-	timestamp, err := time.Parse(p.timestampFormat, timestampStr)
-	if err != nil {
-		logrus.WithError(err).WithField("timestamp_str", timestampStr).Error("Failed to parse timestamp")
-		return nil, fmt.Errorf("failed to parse timestamp '%s': %w", timestampStr, err)
-	}
-
-	// Parse PID and TID
-	pid, err := strconv.Atoi(pidStr)
-	if err != nil {
-		logrus.WithError(err).WithField("pid_str", pidStr).Error("Failed to parse PID")
-		return nil, fmt.Errorf("failed to parse PID '%s': %w", pidStr, err)
-	}
-
-	tid, err := strconv.Atoi(tidStr)
-	if err != nil {
-		logrus.WithError(err).WithField("tid_str", tidStr).Error("Failed to parse TID")
-		return nil, fmt.Errorf("failed to parse TID '%s': %w", tidStr, err)
-	}
-
-	entry := &LogEntry{
-		Timestamp: timestamp,
-		Level:     level,
-		Tag:       tag,
-		PID:       pid,
-		TID:       tid,
-		Message:   message,
-	}
 
 	// Try to extract JSON data if enabled
 	if p.jsonExtraction {
@@ -133,7 +160,7 @@ func (p *LogcatPlainParser) Parse(logLine string) (*LogEntry, error) {
 }
 
 // extractEventData attempts to extract JSON event data from the log entry
-func (p *LogcatPlainParser) extractEventData(entry *LogEntry, logLine string) {
+func (p *PlainParser) extractEventData(entry *LogEntry, logLine string) {
 	// First try the event regex pattern
 	if p.eventRegex != nil {
 		logrus.Debug("Trying to extract event data using regex pattern")
@@ -158,11 +185,11 @@ func (p *LogcatPlainParser) extractEventData(entry *LogEntry, logLine string) {
 }
 
 // tryParseJSON attempts to parse a string as JSON and populate EventData
-func (p *LogcatPlainParser) tryParseJSON(entry *LogEntry, jsonStr string) bool {
+func (p *PlainParser) tryParseJSON(entry *LogEntry, jsonStr string) bool {
 	var eventData map[string]interface{}
 	if err := json.Unmarshal([]byte(jsonStr), &eventData); err == nil {
 		entry.EventData = eventData
-		logrus.WithField("event_keys", getMapKeys(eventData)).Debug("JSON parsed successfully")
+		logrus.WithField("event_keys", getMapKeysPlain(eventData)).Debug("JSON parsed successfully")
 		return true
 	}
 	logrus.WithField("json_str", jsonStr).Debug("Failed to parse as JSON")
@@ -170,7 +197,7 @@ func (p *LogcatPlainParser) tryParseJSON(entry *LogEntry, jsonStr string) bool {
 }
 
 // Helper function to get map keys for logging
-func getMapKeys(m map[string]interface{}) []string {
+func getMapKeysPlain(m map[string]interface{}) []string {
 	keys := make([]string, 0, len(m))
 	for k := range m {
 		keys = append(keys, k)
@@ -178,7 +205,7 @@ func getMapKeys(m map[string]interface{}) []string {
 	return keys
 }
 
-func (p *LogcatPlainParser) ParseFile(filepath string) ([]*LogEntry, error) {
+func (p *PlainParser) ParseFile(filepath string) ([]*LogEntry, error) {
 	logrus.WithField("filepath", filepath).Info("Starting to parse log file")
 
 	file, err := os.Open(filepath)

@@ -1,6 +1,6 @@
 # Example funnel configuration for LogLion
 version: "1.0"
-format: "logcat-plain"  # Log format for plain text logcat files
+format: "plain"  # Log format for plain text log files
 
 funnel:
   name: "Purchase Flow"
@@ -21,8 +21,9 @@ funnel:
 #      required_properties:
 #        transaction_id: ".*"
 
-# Optional: Define how to extract data from logcat files
-#log_parser:
-#  timestamp_format: "01-02 15:04:05.000"
-#  event_regex: ".*Analytics: (.*)"
-#  json_extraction: true  # Try to parse JSON from log line
+# Optional: Define how to extract data from log files
+log_parser:
+  timestamp_format: "01-02 15:04:05.000"
+  event_regex: ".*Analytics: (.*)"
+  json_extraction: true  # Try to parse JSON from log line
+  log_line_regex: "^(\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3})\\s+(\\d+)\\s+(\\d+)\\s+([VDIWEFS])\\s+([^:]+):\\s*(.*)$"
