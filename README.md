@@ -36,7 +36,6 @@ go install
 1. **Create a funnel configuration file** (`funnel.yaml`):
 
 ```yaml
-version: "1.0"
 format: "plain"
 
 funnel:
@@ -107,7 +106,6 @@ The configuration file defines how LogLion should parse logs and what constitute
 ### Basic Structure
 
 ```yaml
-version: "1.0"    # Configuration version
 format: "plain"   # Log format (plain, logcat-json)
 
 funnel:
@@ -157,10 +155,10 @@ log_parser:
 See the `examples/` directory for:
 
 - `simple_funnel.yaml`: Simple text log configuration
-- `logcat_plain_funnel.yaml`: Logcat format configuration  
+- `plain_funnel.yaml`: Plain text log configuration  
 - `oslog_funnel.yaml`: macOS oslog format configuration
 - `sample_simple.txt`: Simple text log sample
-- `sample_logcat_plain.txt`: Sample Android logcat file
+- `sample_logcat_plain.txt`: Sample logcat file
 
 ## License
 

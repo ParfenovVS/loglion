@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/loglion/funnel-config-schema",
+  "title": "LogLion Funnel Configuration",
+  "description": "Schema for LogLion funnel configuration files",
+  "type": "object",
+  "required": ["format", "funnel"],
+  "additionalProperties": false,
+  "properties": {
+    "format": {
+      "type": "string",
+      "enum": ["plain", "logcat-json"],
+      "description": "Log format type. Use 'plain' for text-based logs and 'logcat-json' for JSON logcat files."
+    },
+    "funnel": {
+      "type": "object",
+      "required": ["name", "steps"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Name of the funnel"
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "description": "Array of funnel steps (minimum 1, maximum 100)",
+          "items": {
+            "type": "object",
+            "required": ["name", "event_pattern"],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Name of the step (must be unique within the funnel)"
+              },
+              "event_pattern": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^.*$",
+                "description": "Regular expression pattern to match events"
+              },
+              "required_properties": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Regular expression pattern for property value"
+                },
+                "description": "Map of property names to regex patterns that must match"
+              }
+            }
+          }
+        }
+      }
+    },
+    "log_parser": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional configuration for log parsing",
+      "properties": {
+        "timestamp_format": {
+          "type": "string",
+          "description": "Go time format string for parsing timestamps. Empty for plain format."
+        },
+        "event_regex": {
+          "type": "string",
+          "pattern": "^.*$",
+          "description": "Regular expression to extract event data from log lines. Defaults based on format."
+        },
+        "json_extraction": {
+          "type": "boolean",
+          "description": "Whether to attempt JSON parsing from extracted event data"
+        },
+        "log_line_regex": {
+          "type": "string",
+          "pattern": "^.*$",
+          "description": "Regular expression to parse the entire log line structure"
+        }
+      }
+    }
+  }
+}

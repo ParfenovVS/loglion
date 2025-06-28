@@ -14,9 +14,8 @@ func TestLoadConfig(t *testing.T) {
 		errorMsg    string
 	}{
 		{
-			name: "valid_config_logcat_plain",
-			content: `version: "1.0"
-format: "logcat-plain"
+			name: "valid_config_plain",
+			content: `format: "plain"
 funnel:
   name: "Test Funnel"
   steps:
@@ -28,8 +27,7 @@ funnel:
 		},
 		{
 			name: "valid_config_logcat_json",
-			content: `version: "1.0"
-format: "logcat-json"
+			content: `format: "logcat-json"
 funnel:
   name: "Test Funnel"
   steps:
@@ -38,35 +36,10 @@ funnel:
       required_properties:
         page: "/test"`,
 			expectError: false,
-		},
-		{
-			name: "valid_config_android_backward_compatibility",
-			content: `version: "1.0"
-format: "android"
-funnel:
-  name: "Test Funnel"
-  steps:
-    - name: "Step1"
-      event_pattern: "analytics.*test"
-      required_properties:
-        page: "/test"`,
-			expectError: false,
-		},
-		{
-			name: "missing_version",
-			content: `format: "logcat-plain"
-funnel:
-  name: "Test"
-  steps:
-    - name: "Step1"
-      event_pattern: "test"`,
-			expectError: true,
-			errorMsg:    "version is required",
 		},
 		{
 			name: "invalid_regex",
-			content: `version: "1.0"
-format: "logcat-plain"
+			content: `format: "plain"
 funnel:
   name: "Test"
   steps:
@@ -77,8 +50,7 @@ funnel:
 		},
 		{
 			name: "empty_funnel_name",
-			content: `version: "1.0"
-format: "logcat-plain"
+			content: `format: "plain"
 funnel:
   steps:
     - name: "Step1"
@@ -88,18 +60,16 @@ funnel:
 		},
 		{
 			name: "no_steps",
-			content: `version: "1.0"
-format: "logcat-plain"
+			content: `format: "plain"
 funnel:
   name: "Test"
   steps: []`,
 			expectError: true,
-			errorMsg:    "must have at least one step",
+			errorMsg:    "Array must have at least 1 items",
 		},
 		{
 			name: "duplicate_step_names",
-			content: `version: "1.0"
-format: "logcat-plain"
+			content: `format: "plain"
 funnel:
   name: "Test"
   steps:
@@ -112,8 +82,7 @@ funnel:
 		},
 		{
 			name: "invalid_property_regex",
-			content: `version: "1.0"
-format: "logcat-plain"
+			content: `format: "plain"
 funnel:
   name: "Test"
   steps:
@@ -126,15 +95,14 @@ funnel:
 		},
 		{
 			name: "unsupported_format",
-			content: `version: "1.0"
-format: "unsupported"
+			content: `format: "unsupported"
 funnel:
   name: "Test"
   steps:
     - name: "Step1"
       event_pattern: "test"`,
 			expectError: true,
-			errorMsg:    "unsupported format",
+			errorMsg:    "format must be one of the following",
 		},
 	}
 
@@ -230,7 +198,6 @@ func TestLoadConfigFileErrors(t *testing.T) {
 
 func TestConfigValidateDefaults(t *testing.T) {
 	config := &Config{
-		Version: "1.0",
 		Funnel: Funnel{
 			Name: "Test",
 			Steps: []Step{
@@ -261,8 +228,7 @@ func TestConfigValidateDefaults(t *testing.T) {
 
 func TestConfigValidateStepLimits(t *testing.T) {
 	config := &Config{
-		Version: "1.0",
-		Format:  "logcat-plain",
+		Format: "plain",
 		Funnel: Funnel{
 			Name:  "Test",
 			Steps: make([]Step, 101), // Too many steps
@@ -303,28 +269,137 @@ func findSubstring(s, substr string) bool {
 	return false
 }
 
-func TestBackwardCompatibility(t *testing.T) {
-	config := &Config{
-		Version: "1.0",
-		Format:  "android", // Old format
-		Funnel: Funnel{
-			Name: "Test",
-			Steps: []Step{
-				{
-					Name:         "Step1",
-					EventPattern: "test",
-				},
-			},
+
+func TestSchemaValidation(t *testing.T) {
+	tests := []struct {
+		name        string
+		content     string
+		expectError bool
+		errorMsg    string
+	}{
+		{
+			name: "valid_minimal_config",
+			content: `format: "plain"
+funnel:
+  name: "Test"
+  steps:
+    - name: "Step1"
+      event_pattern: "test"`,
+			expectError: false,
+		},
+		{
+			name: "valid_config_with_properties",
+			content: `format: "logcat-json"
+funnel:
+  name: "Test"
+  steps:
+    - name: "Step1"
+      event_pattern: "analytics.*test"
+      required_properties:
+        page: "/test"
+        user_id: "[0-9]+"
+log_parser:
+  timestamp_format: "01-02 15:04:05.000"
+  event_regex: ".*Analytics: (.*)"
+  json_extraction: true`,
+			expectError: false,
+		},
+		{
+			name: "missing_required_format",
+			content: `funnel:
+  name: "Test"
+  steps:
+    - name: "Step1"
+      event_pattern: "test"`,
+			expectError: true,
+			errorMsg:    "format",
+		},
+		{
+			name:        "missing_required_funnel",
+			content:     `format: "plain"`,
+			expectError: true,
+			errorMsg:    "funnel",
+		},
+		{
+			name: "invalid_format_enum",
+			content: `format: "invalid_format"
+funnel:
+  name: "Test"
+  steps:
+    - name: "Step1"
+      event_pattern: "test"`,
+			expectError: true,
+			errorMsg:    "format",
+		},
+		{
+			name: "empty_funnel_name",
+			content: `format: "plain"
+funnel:
+  name: ""
+  steps:
+    - name: "Step1"
+      event_pattern: "test"`,
+			expectError: true,
+			errorMsg:    "name",
+		},
+		{
+			name: "empty_steps_array",
+			content: `format: "plain"
+funnel:
+  name: "Test"
+  steps: []`,
+			expectError: true,
+			errorMsg:    "steps",
+		},
+		{
+			name: "step_missing_name",
+			content: `format: "plain"
+funnel:
+  name: "Test"
+  steps:
+    - event_pattern: "test"`,
+			expectError: true,
+			errorMsg:    "name",
+		},
+		{
+			name: "step_missing_event_pattern",
+			content: `format: "plain"
+funnel:
+  name: "Test"
+  steps:
+    - name: "Step1"`,
+			expectError: true,
+			errorMsg:    "event_pattern",
+		},
+		{
+			name: "additional_properties_not_allowed",
+			content: `format: "plain"
+funnel:
+  name: "Test"
+  steps:
+    - name: "Step1"
+      event_pattern: "test"
+extra_field: "not_allowed"`,
+			expectError: true,
+			errorMsg:    "Additional property",
 		},
 	}
 
-	err := config.Validate()
-	if err != nil {
-		t.Errorf("Expected no error with backward compatible config, got: %v", err)
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateSchema([]byte(tt.content))
 
-	// Check that 'android' format was mapped to 'plain'
-	if config.Format != "plain" {
-		t.Errorf("Expected 'android' format to be mapped to 'plain', got: %s", config.Format)
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("Expected schema validation error containing '%s', but got none", tt.errorMsg)
+				} else if tt.errorMsg != "" && !containsString(err.Error(), tt.errorMsg) {
+					t.Errorf("Expected schema validation error containing '%s', got: %v", tt.errorMsg, err)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Expected no schema validation error, got: %v", err)
+				}
+			}
+		})
 	}
 }

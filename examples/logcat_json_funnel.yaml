@@ -1,5 +1,6 @@
 # Example funnel configuration for LogLion (JSON logcat format)
-version: "1.0"
+# yaml-language-server: $schema=../schema/funnel-config.schema.json
+
 format: "logcat-json"  # Log format for .logcat JSON files
 
 funnel:

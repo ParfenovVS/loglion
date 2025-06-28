@@ -1,16 +1,18 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 
 	"github.com/sirupsen/logrus"
+	"github.com/xeipuuv/gojsonschema"
 	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
-	Version   string    `yaml:"version"`
 	Format    string    `yaml:"format"`
 	Funnel    Funnel    `yaml:"funnel"`
 	LogParser LogParser `yaml:"log_parser,omitempty"`
@@ -70,11 +72,16 @@ func LoadConfig(filepath string) (*Config, error) {
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"version": config.Version,
-		"format":  config.Format,
-		"funnel":  config.Funnel.Name,
-	}).Debug("Config parsed successfully, starting validation")
+		"format": config.Format,
+		"funnel": config.Funnel.Name,
+	}).Debug("Config parsed successfully, starting schema validation")
 
+	if err := validateSchema(data); err != nil {
+		logrus.WithError(err).WithField("filepath", filepath).Error("Schema validation failed")
+		return nil, fmt.Errorf("schema validation failed for '%s': %w", filepath, err)
+	}
+
+	logrus.Debug("Schema validation passed, starting struct validation")
 	if err := config.Validate(); err != nil {
 		logrus.WithError(err).WithField("filepath", filepath).Error("Config validation failed")
 		return nil, fmt.Errorf("config validation failed for '%s': %w", filepath, err)
@@ -84,25 +91,65 @@ func LoadConfig(filepath string) (*Config, error) {
 	return &config, nil
 }
 
+func validateSchema(yamlData []byte) error {
+	// Get the schema file path relative to the project root
+	schemaPath := "schema/funnel-config.schema.json"
+
+	// Try to find the schema file
+	if _, err := os.Stat(schemaPath); os.IsNotExist(err) {
+		// If not found in current directory, try to find it relative to the config package
+		wd, _ := os.Getwd()
+		projectRoot := filepath.Dir(filepath.Dir(wd)) // Go up from internal/config to project root
+		schemaPath = filepath.Join(projectRoot, "schema", "funnel-config.schema.json")
+
+		if _, err := os.Stat(schemaPath); os.IsNotExist(err) {
+			logrus.Warn("Schema file not found, skipping schema validation")
+			return nil
+		}
+	}
+
+	logrus.WithField("schema_path", schemaPath).Debug("Loading JSON schema")
+	schemaLoader := gojsonschema.NewReferenceLoader("file://" + schemaPath)
+
+	// Convert YAML to JSON for validation
+	var yamlObj interface{}
+	if err := yaml.Unmarshal(yamlData, &yamlObj); err != nil {
+		return fmt.Errorf("failed to parse YAML for schema validation: %w", err)
+	}
+
+	jsonData, err := json.Marshal(yamlObj)
+	if err != nil {
+		return fmt.Errorf("failed to convert YAML to JSON for schema validation: %w", err)
+	}
+
+	documentLoader := gojsonschema.NewBytesLoader(jsonData)
+
+	logrus.Debug("Performing JSON schema validation")
+	result, err := gojsonschema.Validate(schemaLoader, documentLoader)
+	if err != nil {
+		return fmt.Errorf("schema validation error: %w", err)
+	}
+
+	if !result.Valid() {
+		var errors []string
+		for _, desc := range result.Errors() {
+			errors = append(errors, fmt.Sprintf("- %s", desc))
+		}
+		return fmt.Errorf("schema validation failed:\n%s", fmt.Sprintf("%v", errors))
+	}
+
+	logrus.Debug("Schema validation completed successfully")
+	return nil
+}
+
 func (c *Config) Validate() error {
 	logrus.Debug("Starting config validation")
-
-	if c.Version == "" {
-		logrus.Error("Config validation failed: version is required")
-		return fmt.Errorf("version is required")
-	}
-	logrus.WithField("version", c.Version).Debug("Version validation passed")
 
 	if c.Format == "" {
 		c.Format = "plain" // Default to plain format
 		logrus.Debug("Format not specified, defaulting to 'plain'")
 	}
 
-	// Backward compatibility: map 'android' and 'logcat-plain' to 'plain'
-	if c.Format == "android" || c.Format == "logcat-plain" {
-		c.Format = "plain"
-		logrus.Debug("Format mapped to 'plain' for backward compatibility")
-	}
 
 	if c.Format != "plain" && c.Format != "logcat-json" {
 		logrus.WithField("format", c.Format).Error("Unsupported format")
