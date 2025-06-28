@@ -10,7 +10,6 @@ LogLion helps you track user conversion funnels by parsing logcat files and chec
 
 - **Logcat parsing**: Parse logcat files with support for plain text and JSON formats
 - **Funnel analysis**: Track multi-step user conversion funnels
-- **Session management**: Group events by user/session with configurable timeouts
 - **Flexible configuration**: YAML-based configuration for defining funnels and steps
 - **Multiple output formats**: Text and JSON output formats
 - **Pattern matching**: Regex-based event pattern matching with property validation
@@ -39,8 +38,6 @@ format: "logcat-plain"
 
 funnel:
   name: "Purchase Flow"
-  session_key: "user_id"
-  timeout_minutes: 30
   
   steps:
     - name: "Product View"
@@ -63,25 +60,6 @@ funnel:
 
 ```bash
 loglion analyze --config funnel.yaml --log logcat.txt
-```
-
-3. **View results**:
-
-```
-✅ Funnel Analysis Complete
-
-Funnel: Purchase Flow
-Total Sessions: 5
-Completed Funnels: 3 (60%)
-
-Step Breakdown:
-1. Product View: 5/5 (100%)
-2. Add to Cart: 4/5 (80%)
-3. Purchase: 3/5 (60%)
-
-Drop-off Analysis:
-- Product View → Add to Cart: 1 session lost
-- Add to Cart → Purchase: 1 session lost
 ```
 
 ## Commands
@@ -126,8 +104,6 @@ format: "logcat-plain"        # Log format preset
 
 funnel:
   name: "My Funnel"                    # Descriptive name
-  session_key: "user_id"              # Field to group events by user
-  timeout_minutes: 30                 # Session timeout
   
   steps:                               # Funnel steps (in order)
     - name: "Step 1"
