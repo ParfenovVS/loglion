@@ -16,10 +16,8 @@ type Config struct {
 }
 
 type Funnel struct {
-	Name           string `yaml:"name"`
-	SessionKey     string `yaml:"session_key"`
-	TimeoutMinutes int    `yaml:"timeout_minutes"`
-	Steps          []Step `yaml:"steps"`
+	Name  string `yaml:"name"`
+	Steps []Step `yaml:"steps"`
 }
 
 type Step struct {
@@ -90,14 +88,6 @@ func (c *Config) Validate() error {
 func (c *Config) validateFunnel() error {
 	if c.Funnel.Name == "" {
 		return fmt.Errorf("name is required")
-	}
-	
-	if c.Funnel.SessionKey == "" {
-		return fmt.Errorf("session_key is required")
-	}
-	
-	if c.Funnel.TimeoutMinutes <= 0 {
-		c.Funnel.TimeoutMinutes = 30 // Default to 30 minutes
 	}
 	
 	if len(c.Funnel.Steps) == 0 {

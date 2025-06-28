@@ -19,8 +19,6 @@ func TestLoadConfig(t *testing.T) {
 format: "android"
 funnel:
   name: "Test Funnel"
-  session_key: "user_id"
-  timeout_minutes: 30
   steps:
     - name: "Step1"
       event_pattern: "analytics.*test"
@@ -33,7 +31,6 @@ funnel:
 			content: `format: "android"
 funnel:
   name: "Test"
-  session_key: "user_id"
   steps:
     - name: "Step1"
       event_pattern: "test"`,
@@ -46,7 +43,6 @@ funnel:
 format: "android"
 funnel:
   name: "Test"
-  session_key: "user_id"
   steps:
     - name: "Step1"
       event_pattern: "[invalid"`,
@@ -58,7 +54,6 @@ funnel:
 			content: `version: "1.0"
 format: "android"
 funnel:
-  session_key: "user_id"
   steps:
     - name: "Step1"
       event_pattern: "test"`,
@@ -66,24 +61,11 @@ funnel:
 			errorMsg:    "name is required",
 		},
 		{
-			name: "missing_session_key",
-			content: `version: "1.0"
-format: "android"
-funnel:
-  name: "Test"
-  steps:
-    - name: "Step1"
-      event_pattern: "test"`,
-			expectError: true,
-			errorMsg:    "session_key is required",
-		},
-		{
 			name: "no_steps",
 			content: `version: "1.0"
 format: "android"
 funnel:
   name: "Test"
-  session_key: "user_id"
   steps: []`,
 			expectError: true,
 			errorMsg:    "must have at least one step",
@@ -94,7 +76,6 @@ funnel:
 format: "android"
 funnel:
   name: "Test"
-  session_key: "user_id"
   steps:
     - name: "Step1"
       event_pattern: "test1"
@@ -109,7 +90,6 @@ funnel:
 format: "android"
 funnel:
   name: "Test"
-  session_key: "user_id"
   steps:
     - name: "Step1"
       event_pattern: "test"
@@ -214,8 +194,7 @@ func TestConfigValidateDefaults(t *testing.T) {
 	config := &Config{
 		Version: "1.0",
 		Funnel: Funnel{
-			Name:       "Test",
-			SessionKey: "user_id",
+			Name: "Test",
 			Steps: []Step{
 				{
 					Name:         "Step1",
@@ -234,9 +213,6 @@ func TestConfigValidateDefaults(t *testing.T) {
 	if config.Format != "android" {
 		t.Errorf("Expected default format 'android', got: %s", config.Format)
 	}
-	if config.Funnel.TimeoutMinutes != 30 {
-		t.Errorf("Expected default timeout 30, got: %d", config.Funnel.TimeoutMinutes)
-	}
 	if config.AndroidParser.TimestampFormat != "01-02 15:04:05.000" {
 		t.Errorf("Expected default timestamp format, got: %s", config.AndroidParser.TimestampFormat)
 	}
@@ -250,9 +226,8 @@ func TestConfigValidateStepLimits(t *testing.T) {
 		Version: "1.0",
 		Format:  "android",
 		Funnel: Funnel{
-			Name:       "Test",
-			SessionKey: "user_id",
-			Steps:      make([]Step, 101), // Too many steps
+			Name:  "Test",
+			Steps: make([]Step, 101), // Too many steps
 		},
 	}
 

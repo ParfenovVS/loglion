@@ -36,7 +36,6 @@ loglion analyze --config funnel.yaml --log logcat.txt --format android
 - `--log, -l`: Path to log file
 - `--format, -f`: Log format preset (default: "android")
 - `--output, -o`: Output format (json, text) (default: "text")
-- `--timeout, -t`: Session timeout in minutes (default: 30)
 
 #### Command: `validate`
 ```bash
@@ -52,8 +51,6 @@ format: "android"  # Log format preset
 
 funnel:
   name: "Purchase Flow"
-  session_key: "user_id"  # How to group events by user
-  timeout_minutes: 30
 
   steps:
     - name: "Product View"
@@ -85,39 +82,48 @@ android_parser:
 ✅ Funnel Analysis Complete
 
 Funnel: Purchase Flow
-Total Sessions: 5
-Completed Funnels: 3 (60%)
+Total Events Analyzed: 247
+Funnel Completed: Yes
 
 Step Breakdown:
-1. Product View: 5/5 (100%)
-2. Add to Cart: 4/5 (80%)
-3. Purchase: 3/5 (60%)
+1. Product View: 15 events (100%)
+2. Add to Cart: 8 events (53.3%)
+3. Purchase: 3 events (20.0%)
 
 Drop-off Analysis:
-- Product View → Add to Cart: 1 session lost
-- Add to Cart → Purchase: 1 session lost
+- Product View → Add to Cart: 7 events lost (46.7% drop-off)
+- Add to Cart → Purchase: 5 events lost (62.5% drop-off)
 ```
 
 #### JSON Output:
 ```json
 {
   "funnel_name": "Purchase Flow",
-  "total_sessions": 5,
-  "completed_funnels": 3,
-  "completion_rate": 0.6,
+  "total_events_analyzed": 247,
+  "funnel_completed": true,
   "steps": [
     {
       "name": "Product View",
-      "completed": 5,
-      "completion_rate": 1.0
+      "event_count": 15,
+      "percentage": 100.0
+    },
+    {
+      "name": "Add to Cart", 
+      "event_count": 8,
+      "percentage": 53.3
+    },
+    {
+      "name": "Purchase",
+      "event_count": 3, 
+      "percentage": 20.0
     }
   ],
-  "sessions": [
+  "drop_offs": [
     {
-      "session_id": "user_123",
-      "completed": true,
-      "steps_completed": 3,
-      "duration_minutes": 15
+      "from": "Product View",
+      "to": "Add to Cart", 
+      "events_lost": 7,
+      "drop_off_rate": 46.7
     }
   ]
 }
@@ -181,24 +187,24 @@ loglion/
 ### ✅ Completed Components
 - [x] Project structure and CLI framework (Cobra)
 - [x] Command structure (analyze, validate, version) - **CLI only, logic is placeholder**
-- [x] Configuration file parsing and validation (YAML) - **Structure defined, validation incomplete**
+- [x] Configuration file parsing and validation (YAML) - **COMPLETED with comprehensive validation**
 - [x] Android logcat parser with JSON extraction - **COMPLETED with full unit tests**
-- [ ] Funnel analysis engine with session management - **Not implemented**
+- [ ] Funnel analysis engine - **Not implemented**
 - [ ] Text and JSON output formatters - **Not implemented**
 - [ ] Basic error handling and validation - **Minimal**
 
 ### 🚧 Current Status
 The MVP core functionality is **PARTIALLY COMPLETE**. Framework is set up but core logic is missing:
 - **CLI**: Command structure exists with proper flags but analyze command has placeholder logic
-- **Config**: YAML parsing structure defined but validation logic incomplete
+- **Config**: YAML parsing and validation FULLY IMPLEMENTED with comprehensive checks
 - **Parser**: Android parser FULLY IMPLEMENTED with robust JSON extraction and unit tests
-- **Analyzer**: Files exist but funnel analysis logic not implemented
+- **Analyzer**: Files exist but funnel analysis logic not implemented (simplified without session management)
 - **Output**: Formatter structure exists but actual formatting not implemented
 
 ### 📋 Success Criteria for MVP
 - [x] Parse Android logcat files successfully - **COMPLETED with full unit test coverage**
 - [x] Extract analytics events using regex patterns - **COMPLETED with configurable regex and JSON extraction**
-- [ ] Group events by session/user - **Not implemented**
+- [ ] Track funnel step progression chronologically - **Not implemented**
 - [ ] Calculate funnel completion rates - **Not implemented**
 - [ ] Output results in text and JSON formats - **Not implemented**
 - [ ] Handle basic error cases gracefully - **Minimal error handling**
@@ -218,11 +224,11 @@ The MVP core functionality is **PARTIALLY COMPLETE**. Framework is set up but co
 ## Sample Test Case
 ```yaml
 # Test config for e-commerce app
+version: "1.0"
+format: "android"
+
 funnel:
   name: "Checkout Flow Test"
-  session_key: "user_id"
-  timeout_minutes: 10
-
   steps:
     - name: "App Launch"
       event_pattern: ".*app_launch.*"
