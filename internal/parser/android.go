@@ -15,19 +15,35 @@ type AndroidParser struct {
 	timestampFormat string
 	eventRegex      *regexp.Regexp
 	jsonExtraction  bool
+	logLineRegex    *regexp.Regexp
 }
 
 func NewAndroidParser() *AndroidParser {
-	// Default Android logcat format: MM-dd HH:mm:ss.SSS
-	timestampFormat := "01-02 15:04:05.000"
+	return NewAndroidParserWithConfig("01-02 15:04:05.000", `.*Analytics.*: (.*)`, true)
+}
+
+func NewAndroidParserWithConfig(timestampFormat, eventRegexPattern string, jsonExtraction bool) *AndroidParser {
+	// Default regex if empty
+	if eventRegexPattern == "" {
+		eventRegexPattern = `.*Analytics.*: (.*)`
+	}
 	
-	// Default regex to extract analytics events
-	eventRegex := regexp.MustCompile(`.*Analytics.*: (.*)`)
+	// Default timestamp format if empty
+	if timestampFormat == "" {
+		timestampFormat = "01-02 15:04:05.000"
+	}
+	
+	// Compile event regex
+	eventRegex := regexp.MustCompile(eventRegexPattern)
+	
+	// Regex to parse the full logcat line format
+	logLineRegex := regexp.MustCompile(`^(\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})\s+(\d+)\s+(\d+)\s+([VDIWEFS])\s+([^:]+):\s*(.*)$`)
 	
 	return &AndroidParser{
 		timestampFormat: timestampFormat,
 		eventRegex:      eventRegex,
-		jsonExtraction:  true,
+		jsonExtraction:  jsonExtraction,
+		logLineRegex:    logLineRegex,
 	}
 }
 
@@ -35,36 +51,36 @@ func (p *AndroidParser) Parse(logLine string) (*LogEntry, error) {
 	// Android logcat format: MM-dd HH:mm:ss.SSS  PID  TID LEVEL TAG: MESSAGE
 	// Example: 01-15 10:30:15.123  1234  5678 I Analytics: {"event": "page_view"}
 	
-	parts := strings.Fields(logLine)
-	if len(parts) < 6 {
-		return nil, fmt.Errorf("invalid log line format")
+	// Use regex to parse the logcat line
+	matches := p.logLineRegex.FindStringSubmatch(strings.TrimSpace(logLine))
+	if len(matches) != 7 {
+		return nil, fmt.Errorf("invalid log line format: %s", logLine)
 	}
 	
-	// Parse timestamp (first two parts)
-	timestampStr := parts[0] + " " + parts[1]
+	// Extract components from regex groups
+	timestampStr := matches[1]
+	pidStr := matches[2]
+	tidStr := matches[3]
+	level := matches[4]
+	tag := matches[5]
+	message := matches[6]
+	
+	// Parse timestamp
 	timestamp, err := time.Parse(p.timestampFormat, timestampStr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse timestamp: %w", err)
+		return nil, fmt.Errorf("failed to parse timestamp '%s': %w", timestampStr, err)
 	}
 	
 	// Parse PID and TID
-	pid, err := strconv.Atoi(parts[2])
+	pid, err := strconv.Atoi(pidStr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse PID: %w", err)
+		return nil, fmt.Errorf("failed to parse PID '%s': %w", pidStr, err)
 	}
 	
-	tid, err := strconv.Atoi(parts[3])
+	tid, err := strconv.Atoi(tidStr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse TID: %w", err)
+		return nil, fmt.Errorf("failed to parse TID '%s': %w", tidStr, err)
 	}
-	
-	// Parse level and tag
-	level := parts[4]
-	tag := strings.TrimSuffix(parts[5], ":")
-	
-	// Extract message (everything after tag)
-	messageStart := strings.Index(logLine, tag+":") + len(tag) + 1
-	message := strings.TrimSpace(logLine[messageStart:])
 	
 	entry := &LogEntry{
 		Timestamp: timestamp,
@@ -76,17 +92,38 @@ func (p *AndroidParser) Parse(logLine string) (*LogEntry, error) {
 	}
 	
 	// Try to extract JSON data if enabled
-	if p.jsonExtraction && p.eventRegex != nil {
+	if p.jsonExtraction {
+		p.extractEventData(entry, logLine)
+	}
+	
+	return entry, nil
+}
+
+// extractEventData attempts to extract JSON event data from the log entry
+func (p *AndroidParser) extractEventData(entry *LogEntry, logLine string) {
+	// First try the event regex pattern
+	if p.eventRegex != nil {
 		matches := p.eventRegex.FindStringSubmatch(logLine)
 		if len(matches) > 1 {
-			var eventData map[string]interface{}
-			if err := json.Unmarshal([]byte(matches[1]), &eventData); err == nil {
-				entry.EventData = eventData
+			jsonStr := strings.TrimSpace(matches[1])
+			if p.tryParseJSON(entry, jsonStr) {
+				return
 			}
 		}
 	}
 	
-	return entry, nil
+	// Fallback: try to parse the message directly as JSON
+	p.tryParseJSON(entry, entry.Message)
+}
+
+// tryParseJSON attempts to parse a string as JSON and populate EventData
+func (p *AndroidParser) tryParseJSON(entry *LogEntry, jsonStr string) bool {
+	var eventData map[string]interface{}
+	if err := json.Unmarshal([]byte(jsonStr), &eventData); err == nil {
+		entry.EventData = eventData
+		return true
+	}
+	return false
 }
 
 func (p *AndroidParser) ParseFile(filepath string) ([]*LogEntry, error) {

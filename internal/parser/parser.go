@@ -33,3 +33,12 @@ func NewParser(format LogFormat) Parser {
 		return NewAndroidParser() // Default to Android
 	}
 }
+
+func NewParserWithConfig(format LogFormat, timestampFormat, eventRegex string, jsonExtraction bool) Parser {
+	switch format {
+	case AndroidFormat:
+		return NewAndroidParserWithConfig(timestampFormat, eventRegex, jsonExtraction)
+	default:
+		return NewAndroidParserWithConfig(timestampFormat, eventRegex, jsonExtraction) // Default to Android
+	}
+}
