@@ -5,6 +5,7 @@ import (
 	"os"
 	"regexp"
 
+	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
@@ -33,78 +34,123 @@ type AndroidParser struct {
 }
 
 func LoadConfig(filepath string) (*Config, error) {
+	logrus.WithField("filepath", filepath).Debug("Starting config load")
+
 	if filepath == "" {
+		logrus.Error("Config file path is empty")
 		return nil, fmt.Errorf("config file path is required")
 	}
 
+	logrus.WithField("filepath", filepath).Debug("Reading config file")
 	data, err := os.ReadFile(filepath)
 	if err != nil {
 		if os.IsNotExist(err) {
+			logrus.WithField("filepath", filepath).Error("Config file not found")
 			return nil, fmt.Errorf("config file not found: %s", filepath)
 		}
+		logrus.WithError(err).WithField("filepath", filepath).Error("Failed to read config file")
 		return nil, fmt.Errorf("failed to read config file '%s': %w", filepath, err)
 	}
 
 	if len(data) == 0 {
+		logrus.WithField("filepath", filepath).Error("Config file is empty")
 		return nil, fmt.Errorf("config file is empty: %s", filepath)
 	}
 
+	logrus.WithFields(logrus.Fields{
+		"filepath": filepath,
+		"size":     len(data),
+	}).Debug("Config file read successfully, parsing YAML")
+
 	var config Config
 	if err := yaml.Unmarshal(data, &config); err != nil {
+		logrus.WithError(err).WithField("filepath", filepath).Error("Failed to parse YAML config")
 		return nil, fmt.Errorf("failed to parse YAML config file '%s': %w", filepath, err)
 	}
 
+	logrus.WithFields(logrus.Fields{
+		"version": config.Version,
+		"format":  config.Format,
+		"funnel":  config.Funnel.Name,
+	}).Debug("Config parsed successfully, starting validation")
+
 	if err := config.Validate(); err != nil {
+		logrus.WithError(err).WithField("filepath", filepath).Error("Config validation failed")
 		return nil, fmt.Errorf("config validation failed for '%s': %w", filepath, err)
 	}
 
+	logrus.WithField("filepath", filepath).Info("Config loaded and validated successfully")
 	return &config, nil
 }
 
 func (c *Config) Validate() error {
+	logrus.Debug("Starting config validation")
+
 	if c.Version == "" {
+		logrus.Error("Config validation failed: version is required")
 		return fmt.Errorf("version is required")
 	}
+	logrus.WithField("version", c.Version).Debug("Version validation passed")
 
 	if c.Format == "" {
 		c.Format = "android" // Default to android format
+		logrus.Debug("Format not specified, defaulting to 'android'")
 	}
 
 	if c.Format != "android" {
+		logrus.WithField("format", c.Format).Error("Unsupported format")
 		return fmt.Errorf("unsupported format: %s (only 'android' is supported)", c.Format)
 	}
+	logrus.WithField("format", c.Format).Debug("Format validation passed")
 
+	logrus.Debug("Validating funnel configuration")
 	if err := c.validateFunnel(); err != nil {
+		logrus.WithError(err).Error("Funnel validation failed")
 		return fmt.Errorf("funnel validation failed: %w", err)
 	}
 
+	logrus.Debug("Validating Android parser configuration")
 	if err := c.validateAndroidParser(); err != nil {
+		logrus.WithError(err).Error("Android parser validation failed")
 		return fmt.Errorf("android_parser validation failed: %w", err)
 	}
 
+	logrus.Debug("Config validation completed successfully")
 	return nil
 }
 
 func (c *Config) validateFunnel() error {
 	if c.Funnel.Name == "" {
+		logrus.Error("Funnel name is required")
 		return fmt.Errorf("name is required")
 	}
+	logrus.WithField("funnel_name", c.Funnel.Name).Debug("Funnel name validation passed")
 
 	if len(c.Funnel.Steps) == 0 {
+		logrus.Error("Funnel must have at least one step")
 		return fmt.Errorf("must have at least one step")
 	}
 
 	if len(c.Funnel.Steps) > 100 {
+		logrus.WithField("step_count", len(c.Funnel.Steps)).Error("Too many funnel steps")
 		return fmt.Errorf("too many steps (maximum 100)")
 	}
 
+	logrus.WithField("step_count", len(c.Funnel.Steps)).Debug("Funnel step count validation passed")
+
 	stepNames := make(map[string]bool)
 	for i, step := range c.Funnel.Steps {
+		logrus.WithFields(logrus.Fields{
+			"step_index": i + 1,
+			"step_name":  step.Name,
+		}).Debug("Validating funnel step")
+
 		if err := c.validateStep(i, step, stepNames); err != nil {
 			return err
 		}
 	}
 
+	logrus.WithField("funnel_name", c.Funnel.Name).Debug("Funnel validation completed successfully")
 	return nil
 }
 
@@ -144,15 +190,26 @@ func (c *Config) validateStep(index int, step Step, stepNames map[string]bool) e
 func (c *Config) validateAndroidParser() error {
 	if c.AndroidParser.TimestampFormat == "" {
 		c.AndroidParser.TimestampFormat = "01-02 15:04:05.000" // Default format
+		logrus.Debug("Timestamp format not specified, using default")
 	}
+	logrus.WithField("timestamp_format", c.AndroidParser.TimestampFormat).Debug("Timestamp format validation passed")
 
 	if c.AndroidParser.EventRegex == "" {
 		c.AndroidParser.EventRegex = ".*Analytics.*: (.*)" // Default regex
+		logrus.Debug("Event regex not specified, using default")
 	}
 
+	logrus.WithField("event_regex", c.AndroidParser.EventRegex).Debug("Validating event regex pattern")
 	if _, err := regexp.Compile(c.AndroidParser.EventRegex); err != nil {
+		logrus.WithError(err).WithField("event_regex", c.AndroidParser.EventRegex).Error("Invalid event regex pattern")
 		return fmt.Errorf("invalid event_regex: %w", err)
 	}
+
+	logrus.WithFields(logrus.Fields{
+		"timestamp_format": c.AndroidParser.TimestampFormat,
+		"event_regex":      c.AndroidParser.EventRegex,
+		"json_extraction":  c.AndroidParser.JSONExtraction,
+	}).Debug("Android parser validation completed successfully")
 
 	return nil
 }

@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
+
+var verbose bool
 
 var rootCmd = &cobra.Command{
 	Use:   "loglion",
@@ -15,6 +18,9 @@ analytics event funnels for automated testing.
 
 It helps you track user conversion funnels by parsing Android log files
 and checking if users complete expected sequences of analytics events.`,
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		setupLogging()
+	},
 }
 
 func Execute() {
@@ -25,5 +31,17 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose logging")
+}
+
+func setupLogging() {
+	if verbose {
+		logrus.SetLevel(logrus.DebugLevel)
+		logrus.SetFormatter(&logrus.TextFormatter{
+			ForceColors:   true,
+			FullTimestamp: true,
+		})
+	} else {
+		logrus.SetLevel(logrus.PanicLevel)
+	}
 }
