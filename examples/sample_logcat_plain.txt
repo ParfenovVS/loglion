@@ -1,10 +1,11 @@
-01-15 10:30:15.123  1234  5678 I Analytics: {"event": "app_launch", "user_id": "user_123", "timestamp": 1642248615123}
-01-15 10:30:45.456  1234  5678 I Analytics: {"event": "page_view", "user_id": "user_123", "page": "/product", "product_id": "prod_456"}
-01-15 10:31:12.789  1234  5678 I Analytics: {"event": "add_to_cart", "user_id": "user_123", "product_id": "prod_456", "quantity": 1}
-01-15 10:32:05.012  1234  5678 I Analytics: {"event": "purchase", "user_id": "user_123", "transaction_id": "txn_789", "amount": 29.99}
-01-15 10:35:20.345  1234  5678 I Analytics: {"event": "app_launch", "user_id": "user_456", "timestamp": 1642248920345}
-01-15 10:35:50.678  1234  5678 I Analytics: {"event": "page_view", "user_id": "user_456", "page": "/product", "product_id": "prod_123"}
-01-15 10:36:15.901  1234  5678 I Analytics: {"event": "add_to_cart", "user_id": "user_456", "product_id": "prod_123", "quantity": 2}
-01-15 10:40:30.234  1234  5678 I Analytics: {"event": "app_launch", "user_id": "user_789", "timestamp": 1642249230234}
-01-15 10:40:55.567  1234  5678 I Analytics: {"event": "page_view", "user_id": "user_789", "page": "/home"}
-01-15 10:41:20.890  1234  5678 I Analytics: {"event": "page_view", "user_id": "user_789", "page": "/product", "product_id": "prod_999"}
+01-15 10:30:15.123  1234  5678 I Analytics: Event app_launch for user_123 timestamp 1642248615123
+01-15 10:30:45.456  1234  5678 I Analytics: Event page_view for user_123 page /product product_id prod_456
+01-15 10:31:12.789  1234  5678 I Analytics: Event add_to_cart for user_123 product_id prod_456 quantity 1
+01-15 10:32:05.012  1234  5678 I Analytics: Event purchase for user_123 transaction_id txn_789 amount 29.99
+01-15 10:35:20.345  1234  5678 I Analytics: Event app_launch for user_456 timestamp 1642248920345
+01-15 10:35:50.678  1234  5678 I Analytics: Event page_view for user_456 page /product product_id prod_123
+01-15 10:36:15.901  1234  5678 I Analytics: Event add_to_cart for user_456 product_id prod_123 quantity 2
+01-15 10:36:15.901  1234  5678 I Analytics: Event add_to_cart for user_456 product_id prod_123 quantity 2
+01-15 10:40:30.234  1234  5678 I Analytics: Event app_launch for user_789 timestamp 1642249230234
+01-15 10:40:55.567  1234  5678 I Analytics: Event page_view for user_789 page /home
+01-15 10:41:20.890  1234  5678 I Analytics: Event page_view for user_789 page /product product_id prod_999
