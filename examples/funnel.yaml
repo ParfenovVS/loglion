@@ -1,0 +1,30 @@
+# Example funnel configuration for LogLion
+version: "1.0"
+format: "android"  # Log format preset
+
+funnel:
+  name: "Purchase Flow"
+  session_key: "user_id"  # How to group events by user
+  timeout_minutes: 30
+
+  steps:
+    - name: "Product View"
+      event_pattern: "analytics.*page_view"
+      required_properties:
+        page: "/product"
+
+    - name: "Add to Cart"
+      event_pattern: "analytics.*add_to_cart"
+      required_properties:
+        product_id: ".*"  # regex pattern
+
+    - name: "Purchase"
+      event_pattern: "analytics.*purchase"
+      required_properties:
+        transaction_id: ".*"
+
+# Optional: Define how to extract data from Android logs
+android_parser:
+  timestamp_format: "01-02 15:04:05.000"
+  event_regex: ".*Analytics.*: (.*)"
+  json_extraction: true  # Try to parse JSON from log line
