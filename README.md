@@ -4,7 +4,9 @@ LogLion is a Go-based CLI tool that analyzes logcat files to validate analytics 
 
 ## Overview
 
-LogLion helps you track user conversion funnels by parsing logcat files and checking if users complete expected sequences of analytics events. This is particularly useful for automated testing of mobile applications where you need to validate that analytics events are being fired correctly throughout user journeys.
+LogLion helps you track user conversion funnels by parsing logcat files and checking if users complete expected
+sequences of analytics events. This is particularly useful for automated testing of mobile applications where you need
+to validate that analytics events are being fired correctly throughout user journeys.
 
 ## Features
 
@@ -38,18 +40,18 @@ format: "logcat-plain"
 
 funnel:
   name: "Purchase Flow"
-  
+
   steps:
     - name: "Product View"
       event_pattern: "analytics.*page_view"
       required_properties:
         page: "/product"
-    
+
     - name: "Add to Cart"
       event_pattern: "analytics.*add_to_cart"
       required_properties:
         product_id: ".*"
-    
+
     - name: "Purchase"
       event_pattern: "analytics.*purchase"
       required_properties:
@@ -65,6 +67,7 @@ loglion analyze --config funnel.yaml --log logcat.txt
 ## Commands
 
 ### `analyze`
+
 Analyze log files for funnel validation.
 
 ```bash
@@ -72,6 +75,7 @@ loglion analyze --config funnel.yaml --log logcat.txt [flags]
 ```
 
 **Flags:**
+
 - `--config, -c`: Path to funnel configuration file (required)
 - `--log, -l`: Path to log file (required)
 - `--format, -f`: Log format preset (default: "logcat-plain")
@@ -79,6 +83,7 @@ loglion analyze --config funnel.yaml --log logcat.txt [flags]
 - `--timeout, -t`: Session timeout in minutes (default: 30)
 
 ### `validate`
+
 Validate funnel configuration file.
 
 ```bash
@@ -86,6 +91,7 @@ loglion validate --config funnel.yaml
 ```
 
 ### `version`
+
 Show version information.
 
 ```bash
@@ -104,11 +110,11 @@ format: "logcat-plain"        # Log format preset
 
 funnel:
   name: "My Funnel"                    # Descriptive name
-  
-  steps:                               # Funnel steps (in order)
+
+  steps: # Funnel steps (in order)
     - name: "Step 1"
       event_pattern: "regex_pattern"   # Regex to match events
-      required_properties:             # Optional property validation
+      required_properties: # Optional property validation
         key: "value_pattern"
 ```
 
@@ -124,10 +130,22 @@ log_parser:
 ## Examples
 
 See the `examples/` directory for:
+
 - `funnel.yaml`: Example funnel configuration
 - `sample_logcat.txt`: Sample Android logcat file
 
-
 ## License
 
-[Add your license here]
+Copyright 2025 Vladimir Parfenov
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
