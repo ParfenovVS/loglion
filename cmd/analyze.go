@@ -2,8 +2,13 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
+	"loglion/internal/analyzer"
+	"loglion/internal/config"
+	"loglion/internal/output"
+	"loglion/internal/parser"
 )
 
 var analyzeCmd = &cobra.Command{
@@ -18,17 +23,61 @@ Example:
 		configFile, _ := cmd.Flags().GetString("config")
 		logFile, _ := cmd.Flags().GetString("log")
 		format, _ := cmd.Flags().GetString("format")
-		output, _ := cmd.Flags().GetString("output")
-		timeout, _ := cmd.Flags().GetInt("timeout")
+		outputFormat, _ := cmd.Flags().GetString("output")
 
-		fmt.Printf("Analyzing log file: %s\n", logFile)
-		fmt.Printf("Using config: %s\n", configFile)
-		fmt.Printf("Format: %s\n", format)
-		fmt.Printf("Output: %s\n", output)
-		fmt.Printf("Timeout: %d minutes\n", timeout)
-		
-		// TODO: Implement actual analysis logic
-		fmt.Println("Analysis functionality will be implemented in next iterations")
+		// Load configuration
+		cfg, err := config.LoadConfig(configFile)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error loading config: %v\n", err)
+			os.Exit(1)
+		}
+
+		// Validate format matches config
+		if cfg.Format != format {
+			fmt.Fprintf(os.Stderr, "Format mismatch: config specifies '%s', but flag specifies '%s'\n", cfg.Format, format)
+			os.Exit(1)
+		}
+
+		// Create parser
+		var logParser parser.Parser
+		switch format {
+		case "android":
+			logParser = parser.NewAndroidParserWithConfig(
+				cfg.AndroidParser.TimestampFormat,
+				cfg.AndroidParser.EventRegex,
+				cfg.AndroidParser.JSONExtraction)
+		default:
+			fmt.Fprintf(os.Stderr, "Unsupported format: %s\n", format)
+			os.Exit(1)
+		}
+
+		// Parse log file
+		entries, err := logParser.ParseFile(logFile)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error parsing log file: %v\n", err)
+			os.Exit(1)
+		}
+
+		// Create analyzer and analyze funnel
+		funnelAnalyzer := analyzer.NewFunnelAnalyzer(cfg)
+		result := funnelAnalyzer.AnalyzeFunnel(entries)
+
+		// Format and output results
+		var formatter output.Formatter
+		switch outputFormat {
+		case "json":
+			formatter = output.NewFormatter(output.JSONFormat)
+		default:
+			formatter = output.NewFormatter(output.TextFormat)
+		}
+
+		formattedOutput, err := formatter.Format(result)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error formatting output: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Print(formattedOutput)
 	},
 }
 

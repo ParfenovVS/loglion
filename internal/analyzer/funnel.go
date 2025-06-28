@@ -1,152 +1,153 @@
 package analyzer
 
 import (
-	"regexp"
 	"loglion/internal/config"
 	"loglion/internal/parser"
+	"regexp"
 )
 
 type FunnelAnalyzer struct {
-	config         *config.Config
-	sessionManager *SessionManager
+	config *config.Config
 }
 
 type FunnelResult struct {
-	FunnelName      string           `json:"funnel_name"`
-	TotalSessions   int              `json:"total_sessions"`
-	CompletedFunnels int             `json:"completed_funnels"`
-	CompletionRate  float64          `json:"completion_rate"`
-	Steps           []StepResult     `json:"steps"`
-	Sessions        []SessionResult  `json:"sessions"`
+	FunnelName          string       `json:"funnel_name"`
+	TotalEventsAnalyzed int          `json:"total_events_analyzed"`
+	FunnelCompleted     bool         `json:"funnel_completed"`
+	Steps               []StepResult `json:"steps"`
+	DropOffs            []DropOff    `json:"drop_offs"`
 }
 
 type StepResult struct {
-	Name           string  `json:"name"`
-	Completed      int     `json:"completed"`
-	CompletionRate float64 `json:"completion_rate"`
+	Name       string  `json:"name"`
+	EventCount int     `json:"event_count"`
+	Percentage float64 `json:"percentage"`
 }
 
-type SessionResult struct {
-	SessionID       string  `json:"session_id"`
-	Completed       bool    `json:"completed"`
-	StepsCompleted  int     `json:"steps_completed"`
-	DurationMinutes float64 `json:"duration_minutes"`
+type DropOff struct {
+	From        string  `json:"from"`
+	To          string  `json:"to"`
+	EventsLost  int     `json:"events_lost"`
+	DropOffRate float64 `json:"drop_off_rate"`
 }
 
 func NewFunnelAnalyzer(cfg *config.Config) *FunnelAnalyzer {
-	sessionManager := NewSessionManager(cfg.Funnel.SessionKey, cfg.Funnel.TimeoutMinutes)
-	
 	return &FunnelAnalyzer{
-		config:         cfg,
-		sessionManager: sessionManager,
+		config: cfg,
 	}
 }
 
-func (fa *FunnelAnalyzer) ProcessLogEntries(entries []*parser.LogEntry) {
-	for _, entry := range entries {
-		fa.sessionManager.AddEvent(entry)
-	}
-}
-
-func (fa *FunnelAnalyzer) AnalyzeFunnel() *FunnelResult {
-	sessions := fa.sessionManager.GetSessions()
-	totalSessions := len(sessions)
-	
-	if totalSessions == 0 {
+func (fa *FunnelAnalyzer) AnalyzeFunnel(entries []*parser.LogEntry) *FunnelResult {
+	if len(entries) == 0 {
 		return &FunnelResult{
-			FunnelName:    fa.config.Funnel.Name,
-			TotalSessions: 0,
+			FunnelName:          fa.config.Funnel.Name,
+			TotalEventsAnalyzed: 0,
+			FunnelCompleted:     false,
+			Steps:               []StepResult{},
+			DropOffs:            []DropOff{},
 		}
 	}
-	
+
 	stepResults := make([]StepResult, len(fa.config.Funnel.Steps))
-	sessionResults := make([]SessionResult, 0, totalSessions)
-	completedFunnels := 0
-	
+	stepCounts := make([]int, len(fa.config.Funnel.Steps))
+
 	// Initialize step results
 	for i, step := range fa.config.Funnel.Steps {
 		stepResults[i] = StepResult{
-			Name:      step.Name,
-			Completed: 0,
+			Name:       step.Name,
+			EventCount: 0,
+			Percentage: 0.0,
 		}
 	}
-	
-	// Analyze each session
-	for _, session := range sessions {
-		sessionResult := fa.analyzeSession(session)
-		sessionResults = append(sessionResults, sessionResult)
-		
-		if sessionResult.Completed {
-			completedFunnels++
+
+	// Track funnel progression chronologically
+	currentStep := 0
+	for _, entry := range entries {
+		if currentStep >= len(fa.config.Funnel.Steps) {
+			break // Funnel completed
 		}
-		
-		// Update step completion counts
-		for i := 0; i < sessionResult.StepsCompleted; i++ {
-			stepResults[i].Completed++
+
+		step := fa.config.Funnel.Steps[currentStep]
+		if fa.eventMatchesStep(entry, step) {
+			stepCounts[currentStep]++
+			currentStep++
 		}
 	}
-	
-	// Calculate completion rates
-	for i := range stepResults {
-		stepResults[i].CompletionRate = float64(stepResults[i].Completed) / float64(totalSessions)
+
+	// Calculate percentages based on first step
+	var baseCount int
+	if len(stepCounts) > 0 && stepCounts[0] > 0 {
+		baseCount = stepCounts[0]
 	}
-	
-	completionRate := float64(completedFunnels) / float64(totalSessions)
-	
+
+	for i, count := range stepCounts {
+		stepResults[i].EventCount = count
+		if baseCount > 0 {
+			stepResults[i].Percentage = float64(count) / float64(baseCount) * 100.0
+		}
+	}
+
+	// Calculate drop-offs
+	dropOffs := []DropOff{}
+	for i := 0; i < len(stepCounts)-1; i++ {
+		if stepCounts[i] > 0 {
+			lost := stepCounts[i] - stepCounts[i+1]
+			dropOffRate := float64(lost) / float64(stepCounts[i]) * 100.0
+
+			dropOffs = append(dropOffs, DropOff{
+				From:        fa.config.Funnel.Steps[i].Name,
+				To:          fa.config.Funnel.Steps[i+1].Name,
+				EventsLost:  lost,
+				DropOffRate: dropOffRate,
+			})
+		}
+	}
+
+	// Determine if funnel was completed
+	funnelCompleted := currentStep >= len(fa.config.Funnel.Steps)
+
 	return &FunnelResult{
-		FunnelName:       fa.config.Funnel.Name,
-		TotalSessions:    totalSessions,
-		CompletedFunnels: completedFunnels,
-		CompletionRate:   completionRate,
-		Steps:            stepResults,
-		Sessions:         sessionResults,
+		FunnelName:          fa.config.Funnel.Name,
+		TotalEventsAnalyzed: len(entries),
+		FunnelCompleted:     funnelCompleted,
+		Steps:               stepResults,
+		DropOffs:            dropOffs,
 	}
 }
 
-func (fa *FunnelAnalyzer) analyzeSession(session *Session) SessionResult {
-	stepsCompleted := 0
-	
-	// Check each step in order
-	for _, step := range fa.config.Funnel.Steps {
-		if fa.sessionCompletedStep(session, step) {
-			stepsCompleted++
-		} else {
-			break // Funnel steps must be completed in order
-		}
-	}
-	
-	isComplete := stepsCompleted == len(fa.config.Funnel.Steps)
-	duration := session.LastEventTime.Sub(session.StartTime).Minutes()
-	
-	return SessionResult{
-		SessionID:       session.ID,
-		Completed:       isComplete,
-		StepsCompleted:  stepsCompleted,
-		DurationMinutes: duration,
-	}
-}
-
-func (fa *FunnelAnalyzer) sessionCompletedStep(session *Session, step config.Step) bool {
+func (fa *FunnelAnalyzer) eventMatchesStep(entry *parser.LogEntry, step config.Step) bool {
+	// Compile regex pattern
 	eventRegex, err := regexp.Compile(step.EventPattern)
 	if err != nil {
 		return false
 	}
-	
-	for _, event := range session.Events {
-		if event.EventData == nil {
-			continue
-		}
-		
-		// Check if event matches the pattern
-		if eventRegex.MatchString(event.Message) {
-			// Check required properties
-			if fa.checkRequiredProperties(event.EventData, step.RequiredProperties) {
-				return true
+
+	// If we have structured event data, match against the "event" field
+	if entry.EventData != nil {
+		if eventValue, exists := entry.EventData["event"]; exists {
+			if eventStr, ok := eventValue.(string); ok {
+				if !eventRegex.MatchString(eventStr) {
+					return false
+				}
+			} else {
+				return false
+			}
+		} else {
+			// Fall back to matching the raw message if no "event" field
+			if !eventRegex.MatchString(entry.Message) {
+				return false
 			}
 		}
+	} else {
+		// No structured data, match against raw message
+		if !eventRegex.MatchString(entry.Message) {
+			return false
+		}
+		return len(step.RequiredProperties) == 0
 	}
-	
-	return false
+
+	// Check required properties
+	return fa.checkRequiredProperties(entry.EventData, step.RequiredProperties)
 }
 
 func (fa *FunnelAnalyzer) checkRequiredProperties(eventData map[string]interface{}, requiredProps map[string]string) bool {
@@ -155,17 +156,17 @@ func (fa *FunnelAnalyzer) checkRequiredProperties(eventData map[string]interface
 		if !exists {
 			return false
 		}
-		
+
 		valueStr, ok := value.(string)
 		if !ok {
 			return false
 		}
-		
+
 		matched, err := regexp.MatchString(pattern, valueStr)
 		if err != nil || !matched {
 			return false
 		}
 	}
-	
+
 	return true
 }

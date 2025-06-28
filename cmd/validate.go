@@ -16,9 +16,9 @@ Example:
   loglion validate --config funnel.yaml`,
 	Run: func(cmd *cobra.Command, args []string) {
 		configFile, _ := cmd.Flags().GetString("config")
-		
+
 		fmt.Printf("Validating config file: %s\n", configFile)
-		
+
 		// TODO: Implement actual validation logic
 		fmt.Println("Validation functionality will be implemented in next iterations")
 	},

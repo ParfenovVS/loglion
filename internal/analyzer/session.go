@@ -1,8 +1,8 @@
 package analyzer
 
 import (
-	"time"
 	"loglion/internal/parser"
+	"time"
 )
 
 type Session struct {
@@ -32,17 +32,17 @@ func (sm *SessionManager) AddEvent(entry *parser.LogEntry) {
 	if entry.EventData == nil {
 		return
 	}
-	
+
 	sessionID, exists := entry.EventData[sm.sessionKey]
 	if !exists {
 		return
 	}
-	
+
 	sessionIDStr, ok := sessionID.(string)
 	if !ok {
 		return
 	}
-	
+
 	session, exists := sm.sessions[sessionIDStr]
 	if !exists {
 		session = &Session{
@@ -52,7 +52,7 @@ func (sm *SessionManager) AddEvent(entry *parser.LogEntry) {
 		}
 		sm.sessions[sessionIDStr] = session
 	}
-	
+
 	// Check if session has timed out
 	if sm.isSessionTimedOut(session, entry.Timestamp) {
 		// Start new session with same ID
@@ -63,7 +63,7 @@ func (sm *SessionManager) AddEvent(entry *parser.LogEntry) {
 		}
 		sm.sessions[sessionIDStr] = session
 	}
-	
+
 	session.Events = append(session.Events, entry)
 	session.LastEventTime = entry.Timestamp
 }

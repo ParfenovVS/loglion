@@ -9,10 +9,10 @@ func TestAndroidParser_Parse(t *testing.T) {
 	parser := NewAndroidParser()
 
 	tests := []struct {
-		name        string
-		logLine     string
-		wantErr     bool
-		expected    *LogEntry
+		name     string
+		logLine  string
+		wantErr  bool
+		expected *LogEntry
 	}{
 		{
 			name:    "valid analytics log with JSON",
@@ -77,19 +77,19 @@ func TestAndroidParser_Parse(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			entry, err := parser.Parse(tt.logLine)
-			
+
 			if tt.wantErr {
 				if err == nil {
 					t.Errorf("Parse() expected error but got none")
 				}
 				return
 			}
-			
+
 			if err != nil {
 				t.Errorf("Parse() unexpected error: %v", err)
 				return
 			}
-			
+
 			if entry == nil {
 				t.Errorf("Parse() returned nil entry")
 				return
@@ -128,7 +128,7 @@ func TestAndroidParser_Parse(t *testing.T) {
 					t.Errorf("Parse() EventData = nil, want %v", tt.expected.EventData)
 					return
 				}
-				
+
 				for key, expectedVal := range tt.expected.EventData {
 					if actualVal, exists := entry.EventData[key]; !exists {
 						t.Errorf("Parse() EventData missing key %s", key)
@@ -151,7 +151,7 @@ func TestAndroidParser_ParseWithConfig(t *testing.T) {
 
 	logLine := "01-15 10:30:15.123  1234  5678 I CustomTag: {\"event\": \"custom_event\"}"
 	entry, err := customParser.Parse(logLine)
-	
+
 	if err != nil {
 		t.Errorf("Parse() unexpected error: %v", err)
 		return
@@ -177,7 +177,7 @@ func TestAndroidParser_JSONExtractionDisabled(t *testing.T) {
 
 	logLine := "01-15 10:30:15.123  1234  5678 I Analytics: {\"event\": \"test\"}"
 	entry, err := parser.Parse(logLine)
-	
+
 	if err != nil {
 		t.Errorf("Parse() unexpected error: %v", err)
 		return

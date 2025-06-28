@@ -27,18 +27,18 @@ func NewAndroidParserWithConfig(timestampFormat, eventRegexPattern string, jsonE
 	if eventRegexPattern == "" {
 		eventRegexPattern = `.*Analytics.*: (.*)`
 	}
-	
+
 	// Default timestamp format if empty
 	if timestampFormat == "" {
 		timestampFormat = "01-02 15:04:05.000"
 	}
-	
+
 	// Compile event regex
 	eventRegex := regexp.MustCompile(eventRegexPattern)
-	
+
 	// Regex to parse the full logcat line format
 	logLineRegex := regexp.MustCompile(`^(\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})\s+(\d+)\s+(\d+)\s+([VDIWEFS])\s+([^:]+):\s*(.*)$`)
-	
+
 	return &AndroidParser{
 		timestampFormat: timestampFormat,
 		eventRegex:      eventRegex,
@@ -50,13 +50,13 @@ func NewAndroidParserWithConfig(timestampFormat, eventRegexPattern string, jsonE
 func (p *AndroidParser) Parse(logLine string) (*LogEntry, error) {
 	// Android logcat format: MM-dd HH:mm:ss.SSS  PID  TID LEVEL TAG: MESSAGE
 	// Example: 01-15 10:30:15.123  1234  5678 I Analytics: {"event": "page_view"}
-	
+
 	// Use regex to parse the logcat line
 	matches := p.logLineRegex.FindStringSubmatch(strings.TrimSpace(logLine))
 	if len(matches) != 7 {
 		return nil, fmt.Errorf("invalid log line format: %s", logLine)
 	}
-	
+
 	// Extract components from regex groups
 	timestampStr := matches[1]
 	pidStr := matches[2]
@@ -64,24 +64,24 @@ func (p *AndroidParser) Parse(logLine string) (*LogEntry, error) {
 	level := matches[4]
 	tag := matches[5]
 	message := matches[6]
-	
+
 	// Parse timestamp
 	timestamp, err := time.Parse(p.timestampFormat, timestampStr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse timestamp '%s': %w", timestampStr, err)
 	}
-	
+
 	// Parse PID and TID
 	pid, err := strconv.Atoi(pidStr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse PID '%s': %w", pidStr, err)
 	}
-	
+
 	tid, err := strconv.Atoi(tidStr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse TID '%s': %w", tidStr, err)
 	}
-	
+
 	entry := &LogEntry{
 		Timestamp: timestamp,
 		Level:     level,
@@ -90,12 +90,12 @@ func (p *AndroidParser) Parse(logLine string) (*LogEntry, error) {
 		TID:       tid,
 		Message:   message,
 	}
-	
+
 	// Try to extract JSON data if enabled
 	if p.jsonExtraction {
 		p.extractEventData(entry, logLine)
 	}
-	
+
 	return entry, nil
 }
 
@@ -111,7 +111,7 @@ func (p *AndroidParser) extractEventData(entry *LogEntry, logLine string) {
 			}
 		}
 	}
-	
+
 	// Fallback: try to parse the message directly as JSON
 	p.tryParseJSON(entry, entry.Message)
 }
@@ -132,28 +132,28 @@ func (p *AndroidParser) ParseFile(filepath string) ([]*LogEntry, error) {
 		return nil, fmt.Errorf("failed to open file: %w", err)
 	}
 	defer file.Close()
-	
+
 	var entries []*LogEntry
 	scanner := bufio.NewScanner(file)
-	
+
 	for scanner.Scan() {
 		line := scanner.Text()
 		if strings.TrimSpace(line) == "" {
 			continue // Skip empty lines
 		}
-		
+
 		entry, err := p.Parse(line)
 		if err != nil {
 			// Log parsing error but continue with other lines
 			continue
 		}
-		
+
 		entries = append(entries, entry)
 	}
-	
+
 	if err := scanner.Err(); err != nil {
 		return nil, fmt.Errorf("error reading file: %w", err)
 	}
-	
+
 	return entries, nil
 }

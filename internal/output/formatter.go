@@ -3,8 +3,8 @@ package output
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"loglion/internal/analyzer"
+	"strings"
 )
 
 type OutputFormat string
@@ -31,37 +31,42 @@ type TextFormatter struct{}
 
 func (f *TextFormatter) Format(result *analyzer.FunnelResult) (string, error) {
 	var output strings.Builder
-	
-	if result.TotalSessions == 0 {
-		output.WriteString("❌ No sessions found\n")
+
+	if result.TotalEventsAnalyzed == 0 {
+		output.WriteString("❌ No events found\n")
 		return output.String(), nil
 	}
-	
-	output.WriteString("✅ Funnel Analysis Complete\n\n")
+
+	// Choose status icon
+	statusIcon := "✅"
+	if !result.FunnelCompleted {
+		statusIcon = "❌"
+	}
+
+	output.WriteString(fmt.Sprintf("%s Funnel Analysis Complete\n\n", statusIcon))
 	output.WriteString(fmt.Sprintf("Funnel: %s\n", result.FunnelName))
-	output.WriteString(fmt.Sprintf("Total Sessions: %d\n", result.TotalSessions))
-	output.WriteString(fmt.Sprintf("Completed Funnels: %d (%.1f%%)\n\n", 
-		result.CompletedFunnels, result.CompletionRate*100))
-	
+	output.WriteString(fmt.Sprintf("Total Events Analyzed: %d\n", result.TotalEventsAnalyzed))
+
+	if result.FunnelCompleted {
+		output.WriteString("Funnel Completed: Yes\n\n")
+	} else {
+		output.WriteString("Funnel Completed: No\n\n")
+	}
+
 	output.WriteString("Step Breakdown:\n")
 	for i, step := range result.Steps {
-		output.WriteString(fmt.Sprintf("%d. %s: %d/%d (%.1f%%)\n", 
-			i+1, step.Name, step.Completed, result.TotalSessions, step.CompletionRate*100))
+		output.WriteString(fmt.Sprintf("%d. %s: %d events (%.1f%%)\n",
+			i+1, step.Name, step.EventCount, step.Percentage))
 	}
-	
-	if len(result.Steps) > 1 {
+
+	if len(result.DropOffs) > 0 {
 		output.WriteString("\nDrop-off Analysis:\n")
-		for i := 0; i < len(result.Steps)-1; i++ {
-			current := result.Steps[i]
-			next := result.Steps[i+1]
-			dropOff := current.Completed - next.Completed
-			if dropOff > 0 {
-				output.WriteString(fmt.Sprintf("- %s → %s: %d session(s) lost\n", 
-					current.Name, next.Name, dropOff))
-			}
+		for _, dropOff := range result.DropOffs {
+			output.WriteString(fmt.Sprintf("- %s → %s: %d events lost (%.1f%% drop-off)\n",
+				dropOff.From, dropOff.To, dropOff.EventsLost, dropOff.DropOffRate))
 		}
 	}
-	
+
 	return output.String(), nil
 }
 
@@ -72,6 +77,6 @@ func (f *JSONFormatter) Format(result *analyzer.FunnelResult) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal JSON: %w", err)
 	}
-	
+
 	return string(jsonData), nil
 }

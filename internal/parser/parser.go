@@ -5,13 +5,13 @@ import (
 )
 
 type LogEntry struct {
-	Timestamp  time.Time
-	Level      string
-	Tag        string
-	PID        int
-	TID        int
-	Message    string
-	EventData  map[string]interface{}
+	Timestamp time.Time
+	Level     string
+	Tag       string
+	PID       int
+	TID       int
+	Message   string
+	EventData map[string]interface{}
 }
 
 type Parser interface {

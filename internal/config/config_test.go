@@ -105,7 +105,7 @@ funnel:
 			// Create temporary file
 			tmpDir := t.TempDir()
 			tmpFile := filepath.Join(tmpDir, "test.yaml")
-			
+
 			err := os.WriteFile(tmpFile, []byte(tt.content), 0644)
 			if err != nil {
 				t.Fatalf("Failed to create test file: %v", err)
@@ -156,7 +156,7 @@ func TestLoadConfigFileErrors(t *testing.T) {
 	t.Run("empty_file", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		tmpFile := filepath.Join(tmpDir, "empty.yaml")
-		
+
 		err := os.WriteFile(tmpFile, []byte(""), 0644)
 		if err != nil {
 			t.Fatalf("Failed to create empty file: %v", err)
@@ -174,7 +174,7 @@ func TestLoadConfigFileErrors(t *testing.T) {
 	t.Run("invalid_yaml", func(t *testing.T) {
 		tmpDir := t.TempDir()
 		tmpFile := filepath.Join(tmpDir, "invalid.yaml")
-		
+
 		err := os.WriteFile(tmpFile, []byte("invalid: yaml: content: ["), 0644)
 		if err != nil {
 			t.Fatalf("Failed to create invalid YAML file: %v", err)
@@ -250,10 +250,10 @@ func TestConfigValidateStepLimits(t *testing.T) {
 
 // Helper function to check if a string contains a substring
 func containsString(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || 
-		(len(substr) > 0 && len(s) > len(substr) && 
-		(s[:len(substr)] == substr || s[len(s)-len(substr):] == substr || 
-		findSubstring(s, substr))))
+	return len(s) >= len(substr) && (s == substr ||
+		(len(substr) > 0 && len(s) > len(substr) &&
+			(s[:len(substr)] == substr || s[len(s)-len(substr):] == substr ||
+				findSubstring(s, substr))))
 }
 
 func findSubstring(s, substr string) bool {

@@ -4,22 +4,20 @@ format: "android"  # Log format preset
 
 funnel:
   name: "Purchase Flow"
-  session_key: "user_id"  # How to group events by user
-  timeout_minutes: 30
 
   steps:
     - name: "Product View"
-      event_pattern: "analytics.*page_view"
+      event_pattern: "page_view"
       required_properties:
         page: "/product"
 
     - name: "Add to Cart"
-      event_pattern: "analytics.*add_to_cart"
+      event_pattern: "add_to_cart"
       required_properties:
         product_id: ".*"  # regex pattern
 
     - name: "Purchase"
-      event_pattern: "analytics.*purchase"
+      event_pattern: "purchase"
       required_properties:
         transaction_id: ".*"
 
