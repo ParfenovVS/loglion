@@ -88,7 +88,6 @@ func init() {
 	analyzeCmd.Flags().StringP("log", "l", "", "Path to log file (required)")
 	analyzeCmd.Flags().StringP("format", "f", "android", "Log format preset")
 	analyzeCmd.Flags().StringP("output", "o", "text", "Output format (json, text)")
-	analyzeCmd.Flags().IntP("timeout", "t", 30, "Session timeout in minutes")
 
 	analyzeCmd.MarkFlagRequired("config")
 	analyzeCmd.MarkFlagRequired("log")
