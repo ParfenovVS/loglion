@@ -1,10 +1,10 @@
 # LogLion - MVP Plan
 
 ## Project Overview
-LogLion is a Go-based CLI tool that analyzes ADB logcat logs to validate analytics event funnels for automated testing.
+LogLion is a Go-based CLI tool that analyzes logcat files to validate analytics event funnels for automated testing.
 
 ## MVP Scope
-**Focus**: Android ADB logcat logs only
+**Focus**: Logcat files (plain text and JSON formats)
 **Goal**: Validate single conversion funnel from log files
 **Timeline**: 2-3 weeks for MVP
 
@@ -12,7 +12,7 @@ LogLion is a Go-based CLI tool that analyzes ADB logcat logs to validate analyti
 - **Language**: Go
 - **CLI Framework**: Cobra CLI
 - **Config Format**: YAML
-- **Log Format**: ADB logcat (Android preset)
+- **Log Format**: Logcat (plain text and JSON formats)
 
 ## MVP Features
 
@@ -28,13 +28,13 @@ loglion
 
 #### Command: `analyze`
 ```bash
-loglion analyze --config funnel.yaml --log logcat.txt --format android
+loglion analyze --config funnel.yaml --log logcat.txt --format logcat-plain
 ```
 
 **Flags:**
 - `--config, -c`: Path to funnel configuration file
 - `--log, -l`: Path to log file
-- `--format, -f`: Log format preset (default: "android")
+- `--format, -f`: Log format preset (default: "logcat-plain")
 - `--output, -o`: Output format (json, text) (default: "text")
 
 #### Command: `validate`
@@ -47,7 +47,7 @@ loglion validate --config funnel.yaml
 ```yaml
 # funnel.yaml
 version: "1.0"
-format: "android"  # Log format preset
+format: "logcat-plain"  # Log format preset
 
 funnel:
   name: "Purchase Flow"
@@ -68,8 +68,8 @@ funnel:
       required_properties:
         transaction_id: ".*"
 
-# Optional: Define how to extract data from Android logs
-android_parser:
+# Optional: Define how to extract data from logcat files
+log_parser:
   timestamp_format: "01-02 15:04:05.000"
   event_regex: ".*Analytics.*: (.*)"
   json_extraction: true  # Try to parse JSON from log line
@@ -166,7 +166,7 @@ loglion/
 │   ├── config/
 │   │   └── config.go
 │   ├── parser/
-│   │   ├── android.go
+│   │   ├── logcat.go
 │   │   └── parser.go
 │   ├── analyzer/
 │   │   └── funnel.go
@@ -187,7 +187,7 @@ loglion/
 - [x] Project structure and CLI framework (Cobra)
 - [x] Command structure (analyze, validate, version) - **FULLY IMPLEMENTED with complete logic**
 - [x] Configuration file parsing and validation (YAML) - **COMPLETED with comprehensive validation**
-- [x] Android logcat parser with JSON extraction - **COMPLETED with full unit tests**
+- [x] Logcat parser with JSON extraction - **COMPLETED with full unit tests**
 - [x] Funnel analysis engine - **COMPLETED with simplified chronological tracking**
 - [x] Text and JSON output formatters - **COMPLETED with drop-off analysis**
 - [x] Basic error handling and validation - **IMPLEMENTED with proper error messages**
@@ -196,12 +196,12 @@ loglion/
 The MVP core functionality is **FULLY COMPLETE**. All core components implemented and tested:
 - **CLI**: Complete analyze command with full integration of config, parser, analyzer, and output
 - **Config**: YAML parsing and validation FULLY IMPLEMENTED with comprehensive checks
-- **Parser**: Android parser FULLY IMPLEMENTED with robust JSON extraction and unit tests
+- **Parser**: Logcat parser FULLY IMPLEMENTED with robust JSON extraction and unit tests
 - **Analyzer**: Simplified funnel analysis FULLY IMPLEMENTED without session management
 - **Output**: Text and JSON formatters FULLY IMPLEMENTED with drop-off analysis and completion tracking
 
 ### 📋 Success Criteria for MVP
-- [x] Parse Android logcat files successfully - **COMPLETED with full unit test coverage**
+- [x] Parse logcat files successfully - **COMPLETED with full unit test coverage**
 - [x] Extract analytics events using regex patterns - **COMPLETED with configurable regex and JSON extraction**
 - [x] Track funnel step progression chronologically - **COMPLETED with simplified tracking**
 - [x] Calculate funnel completion rates - **COMPLETED with percentage calculations and drop-off rates**
@@ -227,7 +227,7 @@ The MVP is fully functional with working examples:
 **Configuration** (`examples/funnel.yaml`):
 ```yaml
 version: "1.0"
-format: "android"
+format: "logcat-plain"
 
 funnel:
   name: "Purchase Flow"
@@ -245,7 +245,7 @@ funnel:
       required_properties:
         transaction_id: ".*"
 
-android_parser:
+log_parser:
   timestamp_format: "01-02 15:04:05.000"
   event_regex: ".*Analytics.*: (.*)"
   json_extraction: true

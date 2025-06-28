@@ -251,11 +251,11 @@ func TestConfigValidateDefaults(t *testing.T) {
 	if config.Format != "logcat-plain" {
 		t.Errorf("Expected default format 'logcat-plain', got: %s", config.Format)
 	}
-	if config.AndroidParser.TimestampFormat != "01-02 15:04:05.000" {
-		t.Errorf("Expected default timestamp format, got: %s", config.AndroidParser.TimestampFormat)
+	if config.LogParser.TimestampFormat != "01-02 15:04:05.000" {
+		t.Errorf("Expected default timestamp format, got: %s", config.LogParser.TimestampFormat)
 	}
-	if config.AndroidParser.EventRegex != ".*Analytics: (.*)" {
-		t.Errorf("Expected default event regex, got: %s", config.AndroidParser.EventRegex)
+	if config.LogParser.EventRegex != ".*Analytics: (.*)" {
+		t.Errorf("Expected default event regex, got: %s", config.LogParser.EventRegex)
 	}
 }
 

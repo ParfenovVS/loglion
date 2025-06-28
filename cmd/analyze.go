@@ -48,18 +48,12 @@ Example:
 			"flag_format":   format,
 		}).Debug("Validating format consistency")
 
-		// Handle backward compatibility for flag format
-		flagFormat := format
-		if flagFormat == "android" {
-			flagFormat = "logcat-plain"
-		}
-
-		if cfg.Format != flagFormat {
+		if cfg.Format != format {
 			logrus.WithFields(logrus.Fields{
 				"config_format": cfg.Format,
-				"flag_format":   flagFormat,
+				"flag_format":   format,
 			}).Error("Format mismatch between config and flag")
-			fmt.Fprintf(os.Stderr, "Format mismatch: config specifies '%s', but flag specifies '%s'\n", cfg.Format, flagFormat)
+			fmt.Fprintf(os.Stderr, "Format mismatch: config specifies '%s', but flag specifies '%s'\n", cfg.Format, format)
 			os.Exit(1)
 		}
 
@@ -67,25 +61,20 @@ Example:
 		logrus.WithField("format", format).Debug("Creating log parser")
 		var logParser parser.Parser
 		
-		// Handle backward compatibility: map 'android' to 'logcat-plain'
-		if format == "android" {
-			format = "logcat-plain"
-			logrus.Debug("Format 'android' mapped to 'logcat-plain' for backward compatibility")
-		}
 		
 		switch format {
 		case "logcat-plain":
 			logParser = parser.NewParserWithConfig(
 				parser.LogcatPlainFormat,
-				cfg.AndroidParser.TimestampFormat,
-				cfg.AndroidParser.EventRegex,
-				cfg.AndroidParser.JSONExtraction)
+				cfg.LogParser.TimestampFormat,
+				cfg.LogParser.EventRegex,
+				cfg.LogParser.JSONExtraction)
 		case "logcat-json":
 			logParser = parser.NewParserWithConfig(
 				parser.LogcatJSONFormat,
-				cfg.AndroidParser.TimestampFormat,
-				cfg.AndroidParser.EventRegex,
-				cfg.AndroidParser.JSONExtraction)
+				cfg.LogParser.TimestampFormat,
+				cfg.LogParser.EventRegex,
+				cfg.LogParser.JSONExtraction)
 		default:
 			logrus.WithField("format", format).Error("Unsupported log format")
 			fmt.Fprintf(os.Stderr, "Unsupported format: %s (supported: logcat-plain, logcat-json)\n", format)

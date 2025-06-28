@@ -12,11 +12,11 @@ var verbose bool
 
 var rootCmd = &cobra.Command{
 	Use:   "loglion",
-	Short: "LogLion - Analytics event funnel validator for Android logs",
-	Long: `LogLion is a CLI tool that analyzes ADB logcat logs to validate 
+	Short: "LogLion - Analytics event funnel validator for log files",
+	Long: `LogLion is a CLI tool that analyzes logcat files to validate 
 analytics event funnels for automated testing.
 
-It helps you track user conversion funnels by parsing Android log files
+It helps you track user conversion funnels by parsing log files
 and checking if users complete expected sequences of analytics events.`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		setupLogging()

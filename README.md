@@ -1,14 +1,14 @@
 # LogLion
 
-LogLion is a Go-based CLI tool that analyzes ADB logcat logs to validate analytics event funnels for automated testing.
+LogLion is a Go-based CLI tool that analyzes logcat files to validate analytics event funnels for automated testing.
 
 ## Overview
 
-LogLion helps you track user conversion funnels by parsing Android log files and checking if users complete expected sequences of analytics events. This is particularly useful for automated testing of mobile applications where you need to validate that analytics events are being fired correctly throughout user journeys.
+LogLion helps you track user conversion funnels by parsing logcat files and checking if users complete expected sequences of analytics events. This is particularly useful for automated testing of mobile applications where you need to validate that analytics events are being fired correctly throughout user journeys.
 
 ## Features
 
-- **Android logcat parsing**: Parse ADB logcat logs with built-in Android format support
+- **Logcat parsing**: Parse logcat files with support for plain text and JSON formats
 - **Funnel analysis**: Track multi-step user conversion funnels
 - **Session management**: Group events by user/session with configurable timeouts
 - **Flexible configuration**: YAML-based configuration for defining funnels and steps
@@ -35,7 +35,7 @@ go install
 
 ```yaml
 version: "1.0"
-format: "android"
+format: "logcat-plain"
 
 funnel:
   name: "Purchase Flow"
@@ -96,7 +96,7 @@ loglion analyze --config funnel.yaml --log logcat.txt [flags]
 **Flags:**
 - `--config, -c`: Path to funnel configuration file (required)
 - `--log, -l`: Path to log file (required)
-- `--format, -f`: Log format preset (default: "android")
+- `--format, -f`: Log format preset (default: "logcat-plain")
 - `--output, -o`: Output format (json, text) (default: "text")
 - `--timeout, -t`: Session timeout in minutes (default: 30)
 
@@ -122,7 +122,7 @@ The configuration file defines how LogLion should parse logs and what constitute
 
 ```yaml
 version: "1.0"           # Configuration version
-format: "android"        # Log format preset
+format: "logcat-plain"        # Log format preset
 
 funnel:
   name: "My Funnel"                    # Descriptive name
@@ -136,10 +136,10 @@ funnel:
         key: "value_pattern"
 ```
 
-### Android Parser Configuration
+### Log Parser Configuration
 
 ```yaml
-android_parser:
+log_parser:
   timestamp_format: "01-02 15:04:05.000"    # Timestamp parsing format
   event_regex: ".*Analytics.*: (.*)"         # Regex to extract event data
   json_extraction: true                      # Parse JSON from log lines

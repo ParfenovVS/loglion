@@ -13,7 +13,7 @@ type Config struct {
 	Version       string        `yaml:"version"`
 	Format        string        `yaml:"format"`
 	Funnel        Funnel        `yaml:"funnel"`
-	AndroidParser AndroidParser `yaml:"android_parser,omitempty"`
+	LogParser LogParser `yaml:"log_parser,omitempty"`
 }
 
 type Funnel struct {
@@ -27,7 +27,7 @@ type Step struct {
 	RequiredProperties map[string]string `yaml:"required_properties,omitempty"`
 }
 
-type AndroidParser struct {
+type LogParser struct {
 	TimestampFormat string `yaml:"timestamp_format"`
 	EventRegex      string `yaml:"event_regex"`
 	JSONExtraction  bool   `yaml:"json_extraction"`
@@ -115,10 +115,10 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("funnel validation failed: %w", err)
 	}
 
-	logrus.Debug("Validating Android parser configuration")
-	if err := c.validateAndroidParser(); err != nil {
-		logrus.WithError(err).Error("Android parser validation failed")
-		return fmt.Errorf("android_parser validation failed: %w", err)
+	logrus.Debug("Validating log parser configuration")
+	if err := c.validateLogParser(); err != nil {
+		logrus.WithError(err).Error("Log parser validation failed")
+		return fmt.Errorf("log_parser validation failed: %w", err)
 	}
 
 	logrus.Debug("Config validation completed successfully")
@@ -193,29 +193,29 @@ func (c *Config) validateStep(index int, step Step, stepNames map[string]bool) e
 	return nil
 }
 
-func (c *Config) validateAndroidParser() error {
-	if c.AndroidParser.TimestampFormat == "" {
-		c.AndroidParser.TimestampFormat = "01-02 15:04:05.000" // Default format
+func (c *Config) validateLogParser() error {
+	if c.LogParser.TimestampFormat == "" {
+		c.LogParser.TimestampFormat = "01-02 15:04:05.000" // Default format
 		logrus.Debug("Timestamp format not specified, using default")
 	}
-	logrus.WithField("timestamp_format", c.AndroidParser.TimestampFormat).Debug("Timestamp format validation passed")
+	logrus.WithField("timestamp_format", c.LogParser.TimestampFormat).Debug("Timestamp format validation passed")
 
-	if c.AndroidParser.EventRegex == "" {
-		c.AndroidParser.EventRegex = ".*Analytics: (.*)" // Default regex
+	if c.LogParser.EventRegex == "" {
+		c.LogParser.EventRegex = ".*Analytics: (.*)" // Default regex
 		logrus.Debug("Event regex not specified, using default")
 	}
 
-	logrus.WithField("event_regex", c.AndroidParser.EventRegex).Debug("Validating event regex pattern")
-	if _, err := regexp.Compile(c.AndroidParser.EventRegex); err != nil {
-		logrus.WithError(err).WithField("event_regex", c.AndroidParser.EventRegex).Error("Invalid event regex pattern")
+	logrus.WithField("event_regex", c.LogParser.EventRegex).Debug("Validating event regex pattern")
+	if _, err := regexp.Compile(c.LogParser.EventRegex); err != nil {
+		logrus.WithError(err).WithField("event_regex", c.LogParser.EventRegex).Error("Invalid event regex pattern")
 		return fmt.Errorf("invalid event_regex: %w", err)
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"timestamp_format": c.AndroidParser.TimestampFormat,
-		"event_regex":      c.AndroidParser.EventRegex,
-		"json_extraction":  c.AndroidParser.JSONExtraction,
-	}).Debug("Android parser validation completed successfully")
+		"timestamp_format": c.LogParser.TimestampFormat,
+		"event_regex":      c.LogParser.EventRegex,
+		"json_extraction":  c.LogParser.JSONExtraction,
+	}).Debug("Log parser validation completed successfully")
 
 	return nil
 }
