@@ -55,5 +55,6 @@ coverage.html
 # Local examples and assets
 examples/local/
 
-# Local instructions
+# Local files
 *.local.md
+.*
