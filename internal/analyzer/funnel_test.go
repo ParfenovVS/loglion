@@ -426,10 +426,10 @@ func TestEventMatchesStepWithRequiredProperties(t *testing.T) {
 
 func TestCheckRequiredProperties(t *testing.T) {
 	tests := []struct {
-		name           string
-		eventData      map[string]interface{}
-		requiredProps  map[string]string
-		wantMatch      bool
+		name          string
+		eventData     map[string]interface{}
+		requiredProps map[string]string
+		wantMatch     bool
 	}{
 		{
 			name: "all_properties_match",

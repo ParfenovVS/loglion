@@ -87,7 +87,7 @@ func (fa *FunnelAnalyzer) AnalyzeFunnel(entries []*parser.LogEntry, max int) *Fu
 		// Mode 1: Track sequential funnel progression through the entire log
 		logrus.Debug("Mode 1: Tracking sequential funnel progression")
 		currentStep = 0
-		
+
 		for entryIndex, entry := range entries {
 			// Check if current entry matches the expected next step
 			if currentStep < len(fa.config.Funnel.Steps) {
@@ -96,7 +96,7 @@ func (fa *FunnelAnalyzer) AnalyzeFunnel(entries []*parser.LogEntry, max int) *Fu
 					stepCounts[currentStep]++
 					matchedEvents++
 					currentStep++
-					
+
 					logrus.WithFields(logrus.Fields{
 						"entry_index": entryIndex + 1,
 						"step_index":  currentStep,
@@ -104,7 +104,7 @@ func (fa *FunnelAnalyzer) AnalyzeFunnel(entries []*parser.LogEntry, max int) *Fu
 						"timestamp":   entry.Timestamp,
 						"message":     entry.Message,
 					}).Debug("Event matched funnel step")
-					
+
 					// Check if funnel was completed
 					if currentStep >= len(fa.config.Funnel.Steps) {
 						conversionsFound++
@@ -141,17 +141,17 @@ func (fa *FunnelAnalyzer) AnalyzeFunnel(entries []*parser.LogEntry, max int) *Fu
 				stepCounts[currentStep]++
 				matchedEvents++
 				logrus.WithFields(logrus.Fields{
-					"entry_index":     entryIndex + 1,
-					"step_index":      currentStep + 1,
-					"step_name":       step.Name,
-					"timestamp":       entry.Timestamp,
-					"message":         entry.Message,
+					"entry_index":        entryIndex + 1,
+					"step_index":         currentStep + 1,
+					"step_name":          step.Name,
+					"timestamp":          entry.Timestamp,
+					"message":            entry.Message,
 					"conversions_so_far": conversionsFound,
 				}).Debug("Event matched funnel step")
 				currentStep++
 			}
 		}
-		
+
 		// Check if funnel was completed at the end
 		if currentStep >= len(fa.config.Funnel.Steps) {
 			logrus.Debug("Funnel completed at end of log")
@@ -164,7 +164,7 @@ func (fa *FunnelAnalyzer) AnalyzeFunnel(entries []*parser.LogEntry, max int) *Fu
 		"matched_events":  matchedEvents,
 		"completed_steps": currentStep,
 		"total_steps":     len(fa.config.Funnel.Steps),
-		"mode":           map[bool]string{true: "count_all", false: "track_conversions"}[max == 0],
+		"mode":            map[bool]string{true: "count_all", false: "track_conversions"}[max == 0],
 	}).Info("Funnel analysis completed")
 
 	// Calculate percentages based on first step

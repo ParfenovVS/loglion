@@ -10,15 +10,15 @@ import (
 )
 
 type Config struct {
-	Version       string        `yaml:"version"`
-	Format        string        `yaml:"format"`
-	Funnel        Funnel        `yaml:"funnel"`
+	Version   string    `yaml:"version"`
+	Format    string    `yaml:"format"`
+	Funnel    Funnel    `yaml:"funnel"`
 	LogParser LogParser `yaml:"log_parser,omitempty"`
 }
 
 type Funnel struct {
-	Name       string  `yaml:"name"`
-	Steps      []Step  `yaml:"steps"`
+	Name  string `yaml:"name"`
+	Steps []Step `yaml:"steps"`
 }
 
 type Step struct {

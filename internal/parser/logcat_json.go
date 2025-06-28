@@ -19,9 +19,9 @@ type LogcatJSONParser struct {
 // LogcatFile represents the structure of a .logcat file
 type LogcatFile struct {
 	Metadata struct {
-		Device                  map[string]interface{} `json:"device"`
-		Filter                  string                 `json:"filter"`
-		ProjectApplicationIds   []string               `json:"projectApplicationIds"`
+		Device                map[string]interface{} `json:"device"`
+		Filter                string                 `json:"filter"`
+		ProjectApplicationIds []string               `json:"projectApplicationIds"`
 	} `json:"metadata"`
 	LogcatMessages []LogcatMessage `json:"logcatMessages"`
 }
@@ -119,9 +119,9 @@ func (p *LogcatJSONParser) ParseFile(filepath string) ([]*LogEntry, error) {
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"filepath":       filepath,
-		"total_messages": len(logcatFile.LogcatMessages),
-		"parsed_entries": parsedCount,
+		"filepath":         filepath,
+		"total_messages":   len(logcatFile.LogcatMessages),
+		"parsed_entries":   parsedCount,
 		"skipped_messages": skippedCount,
 	}).Info(".logcat JSON file parsing completed")
 
@@ -196,4 +196,3 @@ func getMapKeysJSON(m map[string]interface{}) []string {
 	}
 	return keys
 }
-

@@ -63,8 +63,7 @@ Examples:
 		// Create parser
 		logrus.WithField("format", format).Debug("Creating log parser")
 		var logParser parser.Parser
-		
-		
+
 		switch format {
 		case "logcat-plain":
 			logParser = parser.NewParserWithConfig(
