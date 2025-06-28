@@ -18,19 +18,22 @@ var analyzeCmd = &cobra.Command{
 	Long: `Analyze command processes log files according to the funnel configuration
 and outputs completion rates and drop-off analysis.
 
-Example:
-  loglion analyze --config funnel.yaml --log logcat.txt --format logcat-plain`,
+Examples:
+  loglion analyze --config funnel.yaml --log logcat.txt --format logcat-plain
+  loglion analyze -c funnel.yaml -l logcat.txt -f logcat-json --max 5`,
 	Run: func(cmd *cobra.Command, args []string) {
 		configFile, _ := cmd.Flags().GetString("config")
 		logFile, _ := cmd.Flags().GetString("log")
 		format, _ := cmd.Flags().GetString("format")
 		outputFormat, _ := cmd.Flags().GetString("output")
+		max, _ := cmd.Flags().GetInt("max")
 
 		logrus.WithFields(logrus.Fields{
 			"config_file":   configFile,
 			"log_file":      logFile,
 			"format":        format,
 			"output_format": outputFormat,
+			"max":           max,
 		}).Info("Starting funnel analysis")
 
 		// Load configuration
@@ -95,7 +98,7 @@ Example:
 		funnelAnalyzer := analyzer.NewFunnelAnalyzer(cfg)
 
 		logrus.Debug("Starting funnel analysis")
-		result := funnelAnalyzer.AnalyzeFunnel(entries)
+		result := funnelAnalyzer.AnalyzeFunnel(entries, max)
 
 		// Format and output results
 		logrus.WithField("output_format", outputFormat).Debug("Creating output formatter")
@@ -127,6 +130,7 @@ func init() {
 	analyzeCmd.Flags().StringP("log", "l", "", "Path to log file (required)")
 	analyzeCmd.Flags().StringP("format", "f", "logcat-plain", "Log format (logcat-plain, logcat-json)")
 	analyzeCmd.Flags().StringP("output", "o", "text", "Output format (json, text)")
+	analyzeCmd.Flags().IntP("max", "m", 0, "Maximum number of funnels to analyze (0 = analyze all events)")
 
 	analyzeCmd.MarkFlagRequired("config")
 	analyzeCmd.MarkFlagRequired("log")
