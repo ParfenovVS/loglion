@@ -17,8 +17,9 @@ type Config struct {
 }
 
 type Funnel struct {
-	Name  string `yaml:"name"`
-	Steps []Step `yaml:"steps"`
+	Name       string  `yaml:"name"`
+	Steps      []Step  `yaml:"steps"`
+	SessionKey string  `yaml:"session_key,omitempty"`
 }
 
 type Step struct {

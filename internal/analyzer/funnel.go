@@ -84,24 +84,37 @@ func (fa *FunnelAnalyzer) AnalyzeFunnel(entries []*parser.LogEntry, max int) *Fu
 	var conversionsFound int
 
 	if max == 0 {
-		// Mode 1: Count all events for each step independently
-		logrus.Debug("Mode 1: Counting all events for each step")
+		// Mode 1: Track sequential funnel progression through the entire log
+		logrus.Debug("Mode 1: Tracking sequential funnel progression")
+		currentStep = 0
+		
 		for entryIndex, entry := range entries {
-			for stepIndex, step := range fa.config.Funnel.Steps {
+			// Check if current entry matches the expected next step
+			if currentStep < len(fa.config.Funnel.Steps) {
+				step := fa.config.Funnel.Steps[currentStep]
 				if fa.eventMatchesStep(entry, step) {
-					stepCounts[stepIndex]++
+					stepCounts[currentStep]++
 					matchedEvents++
+					currentStep++
+					
 					logrus.WithFields(logrus.Fields{
 						"entry_index": entryIndex + 1,
-						"step_index":  stepIndex + 1,
+						"step_index":  currentStep,
 						"step_name":   step.Name,
 						"timestamp":   entry.Timestamp,
 						"message":     entry.Message,
 					}).Debug("Event matched funnel step")
+					
+					// Check if funnel was completed
+					if currentStep >= len(fa.config.Funnel.Steps) {
+						conversionsFound++
+						logrus.WithField("conversions_total", conversionsFound).Debug("Funnel completed")
+						// Reset to look for additional complete funnels
+						currentStep = 0
+					}
 				}
 			}
 		}
-		currentStep = len(fa.config.Funnel.Steps) // Mark all steps as completed for percentage calculation
 	} else {
 		// Mode 2: Track complete funnel conversions, stop after 'max' conversions
 		logrus.WithField("target_conversions", max).Debug("Mode 2: Tracking complete funnel conversions")
@@ -202,7 +215,8 @@ func (fa *FunnelAnalyzer) AnalyzeFunnel(entries []*parser.LogEntry, max int) *Fu
 	// Determine if funnel was completed
 	var funnelCompleted bool
 	if max == 0 {
-		funnelCompleted = currentStep >= len(fa.config.Funnel.Steps)
+		// In Mode 1, check if we found any complete conversions
+		funnelCompleted = conversionsFound > 0
 	} else {
 		// In Mode 2, check if we found any complete conversions
 		funnelCompleted = conversionsFound > 0
