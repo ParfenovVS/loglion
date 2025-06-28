@@ -93,13 +93,19 @@ func (c *Config) Validate() error {
 	logrus.WithField("version", c.Version).Debug("Version validation passed")
 
 	if c.Format == "" {
-		c.Format = "android" // Default to android format
-		logrus.Debug("Format not specified, defaulting to 'android'")
+		c.Format = "logcat-plain" // Default to logcat-plain format
+		logrus.Debug("Format not specified, defaulting to 'logcat-plain'")
 	}
 
-	if c.Format != "android" {
+	// Backward compatibility: map 'android' to 'logcat-plain'
+	if c.Format == "android" {
+		c.Format = "logcat-plain"
+		logrus.Debug("Format 'android' mapped to 'logcat-plain' for backward compatibility")
+	}
+
+	if c.Format != "logcat-plain" && c.Format != "logcat-json" {
 		logrus.WithField("format", c.Format).Error("Unsupported format")
-		return fmt.Errorf("unsupported format: %s (only 'android' is supported)", c.Format)
+		return fmt.Errorf("unsupported format: %s (supported formats: 'logcat-plain', 'logcat-json')", c.Format)
 	}
 	logrus.WithField("format", c.Format).Debug("Format validation passed")
 
@@ -195,7 +201,7 @@ func (c *Config) validateAndroidParser() error {
 	logrus.WithField("timestamp_format", c.AndroidParser.TimestampFormat).Debug("Timestamp format validation passed")
 
 	if c.AndroidParser.EventRegex == "" {
-		c.AndroidParser.EventRegex = ".*Analytics.*: (.*)" // Default regex
+		c.AndroidParser.EventRegex = ".*Analytics: (.*)" // Default regex
 		logrus.Debug("Event regex not specified, using default")
 	}
 

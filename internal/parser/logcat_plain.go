@@ -13,27 +13,27 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type AndroidParser struct {
+type LogcatPlainParser struct {
 	timestampFormat string
 	eventRegex      *regexp.Regexp
 	jsonExtraction  bool
 	logLineRegex    *regexp.Regexp
 }
 
-func NewAndroidParser() *AndroidParser {
-	return NewAndroidParserWithConfig("01-02 15:04:05.000", `.*Analytics.*: (.*)`, true)
+func NewLogcatPlainParser() *LogcatPlainParser {
+	return NewLogcatPlainParserWithConfig("01-02 15:04:05.000", `.*Analytics: (.*)`, true)
 }
 
-func NewAndroidParserWithConfig(timestampFormat, eventRegexPattern string, jsonExtraction bool) *AndroidParser {
+func NewLogcatPlainParserWithConfig(timestampFormat, eventRegexPattern string, jsonExtraction bool) *LogcatPlainParser {
 	logrus.WithFields(logrus.Fields{
 		"timestamp_format":    timestampFormat,
 		"event_regex_pattern": eventRegexPattern,
 		"json_extraction":     jsonExtraction,
-	}).Debug("Creating new Android parser")
+	}).Debug("Creating new LogcatPlain parser")
 
 	// Default regex if empty
 	if eventRegexPattern == "" {
-		eventRegexPattern = `.*Analytics.*: (.*)`
+		eventRegexPattern = `.*Analytics: (.*)`
 		logrus.Debug("Using default event regex pattern")
 	}
 
@@ -50,19 +50,19 @@ func NewAndroidParserWithConfig(timestampFormat, eventRegexPattern string, jsonE
 	// Regex to parse the full logcat line format
 	logLineRegex := regexp.MustCompile(`^(\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})\s+(\d+)\s+(\d+)\s+([VDIWEFS])\s+([^:]+):\s*(.*)$`)
 
-	parser := &AndroidParser{
+	parser := &LogcatPlainParser{
 		timestampFormat: timestampFormat,
 		eventRegex:      eventRegex,
 		jsonExtraction:  jsonExtraction,
 		logLineRegex:    logLineRegex,
 	}
 
-	logrus.Debug("Android parser created successfully")
+	logrus.Debug("LogcatPlain parser created successfully")
 	return parser
 }
 
-func (p *AndroidParser) Parse(logLine string) (*LogEntry, error) {
-	logrus.WithField("log_line", logLine).Debug("Parsing Android log line")
+func (p *LogcatPlainParser) Parse(logLine string) (*LogEntry, error) {
+	logrus.WithField("log_line", logLine).Debug("Parsing LogcatPlain log line")
 
 	// Use regex to parse the logcat line
 	matches := p.logLineRegex.FindStringSubmatch(strings.TrimSpace(logLine))
@@ -133,7 +133,7 @@ func (p *AndroidParser) Parse(logLine string) (*LogEntry, error) {
 }
 
 // extractEventData attempts to extract JSON event data from the log entry
-func (p *AndroidParser) extractEventData(entry *LogEntry, logLine string) {
+func (p *LogcatPlainParser) extractEventData(entry *LogEntry, logLine string) {
 	// First try the event regex pattern
 	if p.eventRegex != nil {
 		logrus.Debug("Trying to extract event data using regex pattern")
@@ -158,7 +158,7 @@ func (p *AndroidParser) extractEventData(entry *LogEntry, logLine string) {
 }
 
 // tryParseJSON attempts to parse a string as JSON and populate EventData
-func (p *AndroidParser) tryParseJSON(entry *LogEntry, jsonStr string) bool {
+func (p *LogcatPlainParser) tryParseJSON(entry *LogEntry, jsonStr string) bool {
 	var eventData map[string]interface{}
 	if err := json.Unmarshal([]byte(jsonStr), &eventData); err == nil {
 		entry.EventData = eventData
@@ -178,7 +178,7 @@ func getMapKeys(m map[string]interface{}) []string {
 	return keys
 }
 
-func (p *AndroidParser) ParseFile(filepath string) ([]*LogEntry, error) {
+func (p *LogcatPlainParser) ParseFile(filepath string) ([]*LogEntry, error) {
 	logrus.WithField("filepath", filepath).Info("Starting to parse log file")
 
 	file, err := os.Open(filepath)

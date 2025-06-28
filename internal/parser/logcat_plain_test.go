@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-func TestAndroidParser_Parse(t *testing.T) {
-	parser := NewAndroidParser()
+func TestLogcatPlainParser_Parse(t *testing.T) {
+	parser := NewLogcatPlainParser()
 
 	tests := []struct {
 		name     string
@@ -141,9 +141,9 @@ func TestAndroidParser_Parse(t *testing.T) {
 	}
 }
 
-func TestAndroidParser_ParseWithConfig(t *testing.T) {
+func TestLogcatPlainParser_ParseWithConfig(t *testing.T) {
 	// Test custom configuration
-	customParser := NewAndroidParserWithConfig(
+	customParser := NewLogcatPlainParserWithConfig(
 		"01-02 15:04:05.000",
 		`.*CustomTag.*: (.*)`,
 		true,
@@ -167,9 +167,9 @@ func TestAndroidParser_ParseWithConfig(t *testing.T) {
 	}
 }
 
-func TestAndroidParser_JSONExtractionDisabled(t *testing.T) {
+func TestLogcatPlainParser_JSONExtractionDisabled(t *testing.T) {
 	// Test with JSON extraction disabled
-	parser := NewAndroidParserWithConfig(
+	parser := NewLogcatPlainParserWithConfig(
 		"01-02 15:04:05.000",
 		`.*Analytics.*: (.*)`,
 		false,
@@ -188,8 +188,8 @@ func TestAndroidParser_JSONExtractionDisabled(t *testing.T) {
 	}
 }
 
-func TestAndroidParser_ExtractEventData(t *testing.T) {
-	parser := NewAndroidParser()
+func TestLogcatPlainParser_ExtractEventData(t *testing.T) {
+	parser := NewLogcatPlainParser()
 
 	tests := []struct {
 		name        string

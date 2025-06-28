@@ -14,7 +14,33 @@ func TestLoadConfig(t *testing.T) {
 		errorMsg    string
 	}{
 		{
-			name: "valid_config",
+			name: "valid_config_logcat_plain",
+			content: `version: "1.0"
+format: "logcat-plain"
+funnel:
+  name: "Test Funnel"
+  steps:
+    - name: "Step1"
+      event_pattern: "analytics.*test"
+      required_properties:
+        page: "/test"`,
+			expectError: false,
+		},
+		{
+			name: "valid_config_logcat_json",
+			content: `version: "1.0"
+format: "logcat-json"
+funnel:
+  name: "Test Funnel"
+  steps:
+    - name: "Step1"
+      event_pattern: "analytics.*test"
+      required_properties:
+        page: "/test"`,
+			expectError: false,
+		},
+		{
+			name: "valid_config_android_backward_compatibility",
 			content: `version: "1.0"
 format: "android"
 funnel:
@@ -28,7 +54,7 @@ funnel:
 		},
 		{
 			name: "missing_version",
-			content: `format: "android"
+			content: `format: "logcat-plain"
 funnel:
   name: "Test"
   steps:
@@ -40,7 +66,7 @@ funnel:
 		{
 			name: "invalid_regex",
 			content: `version: "1.0"
-format: "android"
+format: "logcat-plain"
 funnel:
   name: "Test"
   steps:
@@ -52,7 +78,7 @@ funnel:
 		{
 			name: "empty_funnel_name",
 			content: `version: "1.0"
-format: "android"
+format: "logcat-plain"
 funnel:
   steps:
     - name: "Step1"
@@ -63,7 +89,7 @@ funnel:
 		{
 			name: "no_steps",
 			content: `version: "1.0"
-format: "android"
+format: "logcat-plain"
 funnel:
   name: "Test"
   steps: []`,
@@ -73,7 +99,7 @@ funnel:
 		{
 			name: "duplicate_step_names",
 			content: `version: "1.0"
-format: "android"
+format: "logcat-plain"
 funnel:
   name: "Test"
   steps:
@@ -87,7 +113,7 @@ funnel:
 		{
 			name: "invalid_property_regex",
 			content: `version: "1.0"
-format: "android"
+format: "logcat-plain"
 funnel:
   name: "Test"
   steps:
@@ -97,6 +123,18 @@ funnel:
         prop: "[invalid"`,
 			expectError: true,
 			errorMsg:    "invalid regex pattern for property",
+		},
+		{
+			name: "unsupported_format",
+			content: `version: "1.0"
+format: "unsupported"
+funnel:
+  name: "Test"
+  steps:
+    - name: "Step1"
+      event_pattern: "test"`,
+			expectError: true,
+			errorMsg:    "unsupported format",
 		},
 	}
 
@@ -210,13 +248,13 @@ func TestConfigValidateDefaults(t *testing.T) {
 	}
 
 	// Check defaults were applied
-	if config.Format != "android" {
-		t.Errorf("Expected default format 'android', got: %s", config.Format)
+	if config.Format != "logcat-plain" {
+		t.Errorf("Expected default format 'logcat-plain', got: %s", config.Format)
 	}
 	if config.AndroidParser.TimestampFormat != "01-02 15:04:05.000" {
 		t.Errorf("Expected default timestamp format, got: %s", config.AndroidParser.TimestampFormat)
 	}
-	if config.AndroidParser.EventRegex != ".*Analytics.*: (.*)" {
+	if config.AndroidParser.EventRegex != ".*Analytics: (.*)" {
 		t.Errorf("Expected default event regex, got: %s", config.AndroidParser.EventRegex)
 	}
 }
@@ -224,7 +262,7 @@ func TestConfigValidateDefaults(t *testing.T) {
 func TestConfigValidateStepLimits(t *testing.T) {
 	config := &Config{
 		Version: "1.0",
-		Format:  "android",
+		Format:  "logcat-plain",
 		Funnel: Funnel{
 			Name:  "Test",
 			Steps: make([]Step, 101), // Too many steps
@@ -263,4 +301,30 @@ func findSubstring(s, substr string) bool {
 		}
 	}
 	return false
+}
+
+func TestBackwardCompatibility(t *testing.T) {
+	config := &Config{
+		Version: "1.0",
+		Format:  "android", // Old format
+		Funnel: Funnel{
+			Name: "Test",
+			Steps: []Step{
+				{
+					Name:         "Step1",
+					EventPattern: "test",
+				},
+			},
+		},
+	}
+
+	err := config.Validate()
+	if err != nil {
+		t.Errorf("Expected no error with backward compatible config, got: %v", err)
+	}
+
+	// Check that 'android' format was mapped to 'logcat-plain'
+	if config.Format != "logcat-plain" {
+		t.Errorf("Expected 'android' format to be mapped to 'logcat-plain', got: %s", config.Format)
+	}
 }

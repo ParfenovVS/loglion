@@ -1,6 +1,6 @@
 # Example funnel configuration for LogLion
 version: "1.0"
-format: "android"  # Log format preset
+format: "logcat-plain"  # Log format for plain text logcat files
 
 funnel:
   name: "Purchase Flow"
@@ -24,5 +24,5 @@ funnel:
 # Optional: Define how to extract data from Android logs
 android_parser:
   timestamp_format: "01-02 15:04:05.000"
-  event_regex: ".*Analytics.*: (.*)"
+  event_regex: ".*Analytics: (.*)"
   json_extraction: true  # Try to parse JSON from log line

@@ -19,7 +19,7 @@ var analyzeCmd = &cobra.Command{
 and outputs completion rates and drop-off analysis.
 
 Example:
-  loglion analyze --config funnel.yaml --log logcat.txt --format android`,
+  loglion analyze --config funnel.yaml --log logcat.txt --format logcat-plain`,
 	Run: func(cmd *cobra.Command, args []string) {
 		configFile, _ := cmd.Flags().GetString("config")
 		logFile, _ := cmd.Flags().GetString("log")
@@ -42,33 +42,53 @@ Example:
 			os.Exit(1)
 		}
 
-		// Validate format matches config
+		// Validate format matches config (with backward compatibility)
 		logrus.WithFields(logrus.Fields{
 			"config_format": cfg.Format,
 			"flag_format":   format,
 		}).Debug("Validating format consistency")
 
-		if cfg.Format != format {
+		// Handle backward compatibility for flag format
+		flagFormat := format
+		if flagFormat == "android" {
+			flagFormat = "logcat-plain"
+		}
+
+		if cfg.Format != flagFormat {
 			logrus.WithFields(logrus.Fields{
 				"config_format": cfg.Format,
-				"flag_format":   format,
+				"flag_format":   flagFormat,
 			}).Error("Format mismatch between config and flag")
-			fmt.Fprintf(os.Stderr, "Format mismatch: config specifies '%s', but flag specifies '%s'\n", cfg.Format, format)
+			fmt.Fprintf(os.Stderr, "Format mismatch: config specifies '%s', but flag specifies '%s'\n", cfg.Format, flagFormat)
 			os.Exit(1)
 		}
 
 		// Create parser
 		logrus.WithField("format", format).Debug("Creating log parser")
 		var logParser parser.Parser
+		
+		// Handle backward compatibility: map 'android' to 'logcat-plain'
+		if format == "android" {
+			format = "logcat-plain"
+			logrus.Debug("Format 'android' mapped to 'logcat-plain' for backward compatibility")
+		}
+		
 		switch format {
-		case "android":
-			logParser = parser.NewAndroidParserWithConfig(
+		case "logcat-plain":
+			logParser = parser.NewParserWithConfig(
+				parser.LogcatPlainFormat,
+				cfg.AndroidParser.TimestampFormat,
+				cfg.AndroidParser.EventRegex,
+				cfg.AndroidParser.JSONExtraction)
+		case "logcat-json":
+			logParser = parser.NewParserWithConfig(
+				parser.LogcatJSONFormat,
 				cfg.AndroidParser.TimestampFormat,
 				cfg.AndroidParser.EventRegex,
 				cfg.AndroidParser.JSONExtraction)
 		default:
 			logrus.WithField("format", format).Error("Unsupported log format")
-			fmt.Fprintf(os.Stderr, "Unsupported format: %s\n", format)
+			fmt.Fprintf(os.Stderr, "Unsupported format: %s (supported: logcat-plain, logcat-json)\n", format)
 			os.Exit(1)
 		}
 
@@ -116,7 +136,7 @@ func init() {
 
 	analyzeCmd.Flags().StringP("config", "c", "", "Path to funnel configuration file (required)")
 	analyzeCmd.Flags().StringP("log", "l", "", "Path to log file (required)")
-	analyzeCmd.Flags().StringP("format", "f", "android", "Log format preset")
+	analyzeCmd.Flags().StringP("format", "f", "logcat-plain", "Log format (logcat-plain, logcat-json)")
 	analyzeCmd.Flags().StringP("output", "o", "text", "Output format (json, text)")
 
 	analyzeCmd.MarkFlagRequired("config")

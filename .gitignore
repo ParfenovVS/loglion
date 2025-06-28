@@ -51,3 +51,6 @@ coverage.html
 .env
 .env.local
 .env.*.local
+
+# Local examples and assets
+examples/local/

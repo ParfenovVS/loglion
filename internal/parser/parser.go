@@ -22,23 +22,28 @@ type Parser interface {
 type LogFormat string
 
 const (
-	AndroidFormat LogFormat = "android"
+	LogcatPlainFormat LogFormat = "logcat-plain"
+	LogcatJSONFormat  LogFormat = "logcat-json"
 )
 
 func NewParser(format LogFormat) Parser {
 	switch format {
-	case AndroidFormat:
-		return NewAndroidParser()
+	case LogcatPlainFormat:
+		return NewLogcatPlainParser()
+	case LogcatJSONFormat:
+		return NewLogcatJSONParser()
 	default:
-		return NewAndroidParser() // Default to Android
+		return NewLogcatPlainParser() // Default to plain logcat
 	}
 }
 
 func NewParserWithConfig(format LogFormat, timestampFormat, eventRegex string, jsonExtraction bool) Parser {
 	switch format {
-	case AndroidFormat:
-		return NewAndroidParserWithConfig(timestampFormat, eventRegex, jsonExtraction)
+	case LogcatPlainFormat:
+		return NewLogcatPlainParserWithConfig(timestampFormat, eventRegex, jsonExtraction)
+	case LogcatJSONFormat:
+		return NewLogcatJSONParserWithConfig(timestampFormat, eventRegex, jsonExtraction)
 	default:
-		return NewAndroidParserWithConfig(timestampFormat, eventRegex, jsonExtraction) // Default to Android
+		return NewLogcatPlainParserWithConfig(timestampFormat, eventRegex, jsonExtraction) // Default to plain logcat
 	}
 }
