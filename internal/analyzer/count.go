@@ -18,7 +18,7 @@ type EventPattern struct {
 }
 
 type CountResult struct {
-	TotalEventsAnalyzed int           `json:"total_events_analyzed"`
+	TotalEventsAnalyzed int            `json:"total_events_analyzed"`
 	PatternCounts       []PatternCount `json:"pattern_counts"`
 }
 
@@ -110,8 +110,8 @@ func (ca *CountAnalyzer) AnalyzeCount(entries []*parser.LogEntry) *CountResult {
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"total_entries":     len(entries),
-		"patterns_checked":  len(ca.patterns),
+		"total_entries":    len(entries),
+		"patterns_checked": len(ca.patterns),
 	}).Info("Count analysis completed")
 
 	result := &CountResult{

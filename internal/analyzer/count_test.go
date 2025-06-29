@@ -96,17 +96,17 @@ func TestNewCountAnalyzer(t *testing.T) {
 
 func TestCountAnalyzer_AnalyzeCount(t *testing.T) {
 	tests := []struct {
-		name                string
-		patterns            []string
-		entries             []*parser.LogEntry
-		wantTotalEvents     int
-		wantPatternCounts   map[string]int
+		name              string
+		patterns          []string
+		entries           []*parser.LogEntry
+		wantTotalEvents   int
+		wantPatternCounts map[string]int
 	}{
 		{
-			name:     "empty_entries",
-			patterns: []string{"login", "logout"},
-			entries:  []*parser.LogEntry{},
-			wantTotalEvents: 0,
+			name:              "empty_entries",
+			patterns:          []string{"login", "logout"},
+			entries:           []*parser.LogEntry{},
+			wantTotalEvents:   0,
 			wantPatternCounts: map[string]int{},
 		},
 		{
@@ -175,13 +175,13 @@ func TestCountAnalyzer_AnalyzeCount(t *testing.T) {
 				{Message: "user_456 logged out", Timestamp: time.Now()},
 				{Message: "event_start occurred", Timestamp: time.Now()},
 				{Message: "event_end occurred", Timestamp: time.Now()},
-				{Message: "user_abc invalid", Timestamp: time.Now()}, // Should not match user_\d+
+				{Message: "user_abc invalid", Timestamp: time.Now()},  // Should not match user_\d+
 				{Message: "event_123 invalid", Timestamp: time.Now()}, // Should not match event_[a-z]+
 			},
 			wantTotalEvents: 6,
 			wantPatternCounts: map[string]int{
-				"user_\\d+":     2,
-				"event_[a-z]+":  2,
+				"user_\\d+":    2,
+				"event_[a-z]+": 2,
 			},
 		},
 		{
@@ -210,7 +210,7 @@ func TestCountAnalyzer_AnalyzeCount(t *testing.T) {
 			result := analyzer.AnalyzeCount(tt.entries)
 
 			if result.TotalEventsAnalyzed != tt.wantTotalEvents {
-				t.Errorf("AnalyzeCount() TotalEventsAnalyzed = %v, want %v", 
+				t.Errorf("AnalyzeCount() TotalEventsAnalyzed = %v, want %v",
 					result.TotalEventsAnalyzed, tt.wantTotalEvents)
 			}
 
@@ -223,7 +223,7 @@ func TestCountAnalyzer_AnalyzeCount(t *testing.T) {
 			}
 
 			if len(result.PatternCounts) != len(tt.patterns) {
-				t.Errorf("AnalyzeCount() PatternCounts length = %v, want %v", 
+				t.Errorf("AnalyzeCount() PatternCounts length = %v, want %v",
 					len(result.PatternCounts), len(tt.patterns))
 			}
 
@@ -236,7 +236,7 @@ func TestCountAnalyzer_AnalyzeCount(t *testing.T) {
 				}
 
 				if patternCount.Count != expectedCount {
-					t.Errorf("AnalyzeCount() pattern %s count = %v, want %v", 
+					t.Errorf("AnalyzeCount() pattern %s count = %v, want %v",
 						patternCount.Pattern, patternCount.Count, expectedCount)
 				}
 			}
@@ -541,7 +541,7 @@ func TestCountAnalyzer_ComplexRegexPatterns(t *testing.T) {
 			result := analyzer.AnalyzeCount(entries)
 
 			if result.TotalEventsAnalyzed != len(tt.testMessages) {
-				t.Errorf("AnalyzeCount() TotalEventsAnalyzed = %v, want %v", 
+				t.Errorf("AnalyzeCount() TotalEventsAnalyzed = %v, want %v",
 					result.TotalEventsAnalyzed, len(tt.testMessages))
 			}
 
@@ -550,7 +550,7 @@ func TestCountAnalyzer_ComplexRegexPatterns(t *testing.T) {
 			}
 
 			if result.PatternCounts[0].Count != tt.wantMatches {
-				t.Errorf("AnalyzeCount() pattern count = %v, want %v", 
+				t.Errorf("AnalyzeCount() pattern count = %v, want %v",
 					result.PatternCounts[0].Count, tt.wantMatches)
 			}
 		})

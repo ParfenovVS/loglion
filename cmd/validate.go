@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/parfenovvs/loglion/internal/config"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/parfenovvs/loglion/internal/config"
 )
 
 var validateCmd = &cobra.Command{
@@ -19,7 +19,7 @@ Examples:
   loglion validate --parser-config parser.yaml
   loglion validate --funnel-config funnel.yaml
   loglion validate --parser-config parser.yaml --funnel-config funnel.yaml`,
-Run: func(cmd *cobra.Command, args []string) {
+	Run: func(cmd *cobra.Command, args []string) {
 		parserConfigFile, _ := cmd.Flags().GetString("parser-config")
 		funnelConfigFile, _ := cmd.Flags().GetString("funnel-config")
 

@@ -15,7 +15,7 @@ var versionCmd = &cobra.Command{
 	Long:  `Display version for LogLion.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		logrus.WithFields(logrus.Fields{
-			"version":    Version,
+			"version": Version,
 		}).Debug("Displaying version information")
 
 		fmt.Println(Version)

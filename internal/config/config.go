@@ -12,7 +12,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-
 type ParserConfig struct {
 	TimestampFormat string `yaml:"timestamp_format"`
 	EventRegex      string `yaml:"event_regex"`
@@ -30,7 +29,6 @@ type Step struct {
 	EventPattern       string            `yaml:"event_pattern"`
 	RequiredProperties map[string]string `yaml:"required_properties,omitempty"`
 }
-
 
 func LoadParserConfig(filepath string) (*ParserConfig, error) {
 	logrus.WithField("filepath", filepath).Debug("Starting parser config load")
@@ -136,7 +134,6 @@ func LoadFunnelConfig(filepath string) (*FunnelConfig, error) {
 	return &config, nil
 }
 
-
 func validateParserSchema(yamlData []byte) error {
 	// Get the schema file path relative to the project root
 	schemaPath := "schema/parser-config.schema.json"
@@ -238,10 +235,6 @@ func validateFunnelSchema(yamlData []byte) error {
 	logrus.Debug("Funnel schema validation completed successfully")
 	return nil
 }
-
-
-
-
 
 func (c *ParserConfig) Validate() error {
 	logrus.Debug("Starting parser config validation")

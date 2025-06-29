@@ -107,8 +107,8 @@ func (f *TextFormatter) FormatFunnel(result *analyzer.FunnelResult) (string, err
 
 func (f *TextFormatter) FormatCount(result *analyzer.CountResult) (string, error) {
 	logrus.WithFields(logrus.Fields{
-		"total_events":    result.TotalEventsAnalyzed,
-		"patterns_count":  len(result.PatternCounts),
+		"total_events":   result.TotalEventsAnalyzed,
+		"patterns_count": len(result.PatternCounts),
 	}).Debug("Formatting count result as text")
 
 	var output strings.Builder

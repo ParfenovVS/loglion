@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 	"github.com/parfenovvs/loglion/internal/analyzer"
 	"github.com/parfenovvs/loglion/internal/config"
 	"github.com/parfenovvs/loglion/internal/output"
 	"github.com/parfenovvs/loglion/internal/parser"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
 
 var funnelCmd = &cobra.Command{
