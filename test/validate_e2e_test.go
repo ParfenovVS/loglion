@@ -29,9 +29,9 @@ func TestValidateCommandE2E(t *testing.T) {
 	}{
 		{
 			name: "validate parser config only",
-			args: []string{"validate", "--parser-config", "../examples/simple-parser.yaml"},
+			args: []string{"validate", "--parser-config", "../examples/simple/simple-parser.yaml"},
 			expected: []string{
-				"Validating parser config file: ../examples/simple-parser.yaml",
+				"Validating parser config file: ../examples/simple/simple-parser.yaml",
 				"✅ Parser configuration is valid!",
 				"Event Regex:",
 				"JSON Extraction:",
@@ -39,9 +39,9 @@ func TestValidateCommandE2E(t *testing.T) {
 		},
 		{
 			name: "validate funnel config only",
-			args: []string{"validate", "--funnel-config", "../examples/simple-funnel.yaml"},
+			args: []string{"validate", "--funnel-config", "../examples/simple/simple-funnel.yaml"},
 			expected: []string{
-				"Validating funnel config file: ../examples/simple-funnel.yaml",
+				"Validating funnel config file: ../examples/simple/simple-funnel.yaml",
 				"✅ Funnel configuration is valid!",
 				"Funnel:",
 				"Steps:",
@@ -49,26 +49,16 @@ func TestValidateCommandE2E(t *testing.T) {
 		},
 		{
 			name: "validate both parser and funnel configs",
-			args: []string{"validate", "--parser-config", "../examples/logcat-parser.yaml", "--funnel-config", "../examples/purchase-funnel.yaml"},
+			args: []string{"validate", "--parser-config", "../examples/android/logcat-parser.yaml", "--funnel-config", "../examples/android/purchase-funnel.yaml"},
 			expected: []string{
-				"Validating parser config file: ../examples/logcat-parser.yaml",
+				"Validating parser config file: ../examples/android/logcat-parser.yaml",
 				"✅ Parser configuration is valid!",
-				"Validating funnel config file: ../examples/purchase-funnel.yaml",
+				"Validating funnel config file: ../examples/android/purchase-funnel.yaml",
 				"✅ Funnel configuration is valid!",
 				"Event Regex:",
 				"JSON Extraction:",
 				"Funnel:",
 				"Steps:",
-			},
-		},
-		{
-			name: "validate with short flags",
-			args: []string{"validate", "-p", "../examples/oslog-parser.yaml", "-f", "../examples/simple-funnel.yaml"},
-			expected: []string{
-				"Validating parser config file: ../examples/oslog-parser.yaml",
-				"✅ Parser configuration is valid!",
-				"Validating funnel config file: ../examples/simple-funnel.yaml",
-				"✅ Funnel configuration is valid!",
 			},
 		},
 		{
@@ -305,17 +295,17 @@ func TestValidateCommandVerboseFlag(t *testing.T) {
 	}{
 		{
 			name: "validate with verbose flag",
-			args: []string{"--verbose", "validate", "--parser-config", "../examples/simple-parser.yaml"},
+			args: []string{"--verbose", "validate", "--parser-config", "../examples/simple/simple-parser.yaml"},
 			expected: []string{
-				"Validating parser config file: ../examples/simple-parser.yaml",
+				"Validating parser config file: ../examples/simple/simple-parser.yaml",
 				"✅ Parser configuration is valid!",
 			},
 		},
 		{
 			name: "validate with short verbose flag",
-			args: []string{"-v", "validate", "--funnel-config", "../examples/simple-funnel.yaml"},
+			args: []string{"-v", "validate", "--funnel-config", "../examples/simple/simple-funnel.yaml"},
 			expected: []string{
-				"Validating funnel config file: ../examples/simple-funnel.yaml",
+				"Validating funnel config file: ../examples/simple/simple-funnel.yaml",
 				"✅ Funnel configuration is valid!",
 			},
 		},

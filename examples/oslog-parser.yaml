@@ -1,6 +1,0 @@
-# OSLog-style log parser configuration
-# yaml-language-server: $schema=../schema/parser-config.schema.json
-
-timestamp_format: "2006-01-02 15:04:05.000000"
-event_regex: "^(.*)$"  # Entire line as event
-json_extraction: false
