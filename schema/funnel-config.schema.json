@@ -2,16 +2,11 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://github.com/loglion/funnel-config-schema",
   "title": "LogLion Funnel Configuration",
-  "description": "Schema for LogLion funnel configuration files",
+  "description": "Schema for LogLion funnel configuration files (plain text format only)",
   "type": "object",
-  "required": ["format", "funnel"],
+  "required": ["funnel"],
   "additionalProperties": false,
   "properties": {
-    "format": {
-      "type": "string",
-      "enum": ["plain", "logcat-json"],
-      "description": "Log format type. Use 'plain' for text-based logs and 'logcat-json' for JSON logcat files."
-    },
     "funnel": {
       "type": "object",
       "required": ["name", "steps"],
@@ -64,12 +59,12 @@
       "properties": {
         "timestamp_format": {
           "type": "string",
-          "description": "Go time format string for parsing timestamps. Empty for plain format."
+          "description": "Go time format string for parsing timestamps. Leave empty if timestamps are not needed."
         },
         "event_regex": {
           "type": "string",
           "pattern": "^.*$",
-          "description": "Regular expression to extract event data from log lines. Defaults based on format."
+          "description": "Regular expression to extract event data from log lines. Defaults to entire line."
         },
         "json_extraction": {
           "type": "boolean",

@@ -19,19 +19,17 @@ var funnelCmd = &cobra.Command{
 and outputs completion rates and drop-off analysis.
 
 Examples:
-  loglion funnel --config funnel.yaml --log logcat.txt --format plain
-  loglion funnel -c funnel.yaml -l logcat.txt -f logcat-json --max 5`,
+  loglion funnel --config funnel.yaml --log logcat.txt
+  loglion funnel -c funnel.yaml -l logcat.txt --max 5`,
 	Run: func(cmd *cobra.Command, args []string) {
 		configFile, _ := cmd.Flags().GetString("config")
 		logFile, _ := cmd.Flags().GetString("log")
-		format, _ := cmd.Flags().GetString("format")
 		outputFormat, _ := cmd.Flags().GetString("output")
 		max, _ := cmd.Flags().GetInt("max")
 
 		logrus.WithFields(logrus.Fields{
 			"config_file":   configFile,
 			"log_file":      logFile,
-			"format":        format,
 			"output_format": outputFormat,
 			"max":           max,
 		}).Info("Starting funnel analysis")
@@ -45,45 +43,13 @@ Examples:
 			os.Exit(1)
 		}
 
-		// Validate format matches config (with backward compatibility)
-		logrus.WithFields(logrus.Fields{
-			"config_format": cfg.Format,
-			"flag_format":   format,
-		}).Debug("Validating format consistency")
-
-		if cfg.Format != format {
-			logrus.WithFields(logrus.Fields{
-				"config_format": cfg.Format,
-				"flag_format":   format,
-			}).Error("Format mismatch between config and flag")
-			fmt.Fprintf(os.Stderr, "Format mismatch: config specifies '%s', but flag specifies '%s'\n", cfg.Format, format)
-			os.Exit(1)
-		}
-
 		// Create parser
-		logrus.WithField("format", format).Debug("Creating log parser")
-		var logParser parser.Parser
-
-		switch format {
-		case "plain":
-			logParser = parser.NewParserWithConfig(
-				parser.PlainFormat,
-				cfg.LogParser.TimestampFormat,
-				cfg.LogParser.EventRegex,
-				cfg.LogParser.JSONExtraction,
-				cfg.LogParser.LogLineRegex)
-		case "logcat-json":
-			logParser = parser.NewParserWithConfig(
-				parser.LogcatJSONFormat,
-				cfg.LogParser.TimestampFormat,
-				cfg.LogParser.EventRegex,
-				cfg.LogParser.JSONExtraction,
-				"") // Empty log line regex for JSON format
-		default:
-			logrus.WithField("format", format).Error("Unsupported log format")
-			fmt.Fprintf(os.Stderr, "Unsupported format: %s (supported: plain, logcat-json)\n", format)
-			os.Exit(1)
-		}
+		logrus.Debug("Creating log parser")
+		logParser := parser.NewParserWithConfig(
+			cfg.LogParser.TimestampFormat,
+			cfg.LogParser.EventRegex,
+			cfg.LogParser.JSONExtraction,
+			cfg.LogParser.LogLineRegex)
 
 		// Parse log file
 		logrus.WithField("log_file", logFile).Debug("Starting log file parsing")
@@ -129,7 +95,6 @@ func init() {
 
 	funnelCmd.Flags().StringP("config", "c", "", "Path to funnel configuration file (required)")
 	funnelCmd.Flags().StringP("log", "l", "", "Path to log file (required)")
-	funnelCmd.Flags().StringP("format", "f", "plain", "Log format (plain, logcat-json)")
 	funnelCmd.Flags().StringP("output", "o", "text", "Output format (json, text)")
 	funnelCmd.Flags().IntP("max", "m", 0, "Maximum number of successful funnels to analyze (0 = analyze all funnels)")
 

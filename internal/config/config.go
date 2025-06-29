@@ -13,7 +13,6 @@ import (
 )
 
 type Config struct {
-	Format    string    `yaml:"format"`
 	Funnel    Funnel    `yaml:"funnel"`
 	LogParser LogParser `yaml:"log_parser,omitempty"`
 }
@@ -71,10 +70,7 @@ func LoadConfig(filepath string) (*Config, error) {
 		return nil, fmt.Errorf("failed to parse YAML config file '%s': %w", filepath, err)
 	}
 
-	logrus.WithFields(logrus.Fields{
-		"format": config.Format,
-		"funnel": config.Funnel.Name,
-	}).Debug("Config parsed successfully, starting schema validation")
+	logrus.WithField("funnel", config.Funnel.Name).Debug("Config parsed successfully, starting schema validation")
 
 	if err := validateSchema(data); err != nil {
 		logrus.WithError(err).WithField("filepath", filepath).Error("Schema validation failed")
@@ -144,18 +140,6 @@ func validateSchema(yamlData []byte) error {
 
 func (c *Config) Validate() error {
 	logrus.Debug("Starting config validation")
-
-	if c.Format == "" {
-		c.Format = "plain" // Default to plain format
-		logrus.Debug("Format not specified, defaulting to 'plain'")
-	}
-
-
-	if c.Format != "plain" && c.Format != "logcat-json" {
-		logrus.WithField("format", c.Format).Error("Unsupported format")
-		return fmt.Errorf("unsupported format: %s (supported formats: 'plain', 'logcat-json')", c.Format)
-	}
-	logrus.WithField("format", c.Format).Debug("Format validation passed")
 
 	logrus.Debug("Validating funnel configuration")
 	if err := c.validateFunnel(); err != nil {
@@ -242,33 +226,20 @@ func (c *Config) validateStep(index int, step Step, stepNames map[string]bool) e
 }
 
 func (c *Config) validateLogParser() error {
-	// Set defaults based on format
-	if c.Format == "plain" {
-		if c.LogParser.TimestampFormat == "" {
-			c.LogParser.TimestampFormat = "" // No default timestamp for plain format
-			logrus.Debug("Timestamp format not specified for plain format, leaving empty")
-		}
+	// Set defaults for plain format (the only supported format)
+	if c.LogParser.TimestampFormat == "" {
+		c.LogParser.TimestampFormat = "" // No default timestamp for plain format
+		logrus.Debug("Timestamp format not specified for plain format, leaving empty")
+	}
 
-		if c.LogParser.EventRegex == "" {
-			c.LogParser.EventRegex = "^(.*)$" // Default: entire line as event
-			logrus.Debug("Event regex not specified, using default for plain format")
-		}
+	if c.LogParser.EventRegex == "" {
+		c.LogParser.EventRegex = "^(.*)$" // Default: entire line as event
+		logrus.Debug("Event regex not specified, using default for plain format")
+	}
 
-		if c.LogParser.LogLineRegex == "" {
-			c.LogParser.LogLineRegex = "^(.*)$" // Default: entire line
-			logrus.Debug("Log line regex not specified, using default for plain format")
-		}
-	} else {
-		// For logcat-json, use legacy defaults
-		if c.LogParser.TimestampFormat == "" {
-			c.LogParser.TimestampFormat = "01-02 15:04:05.000"
-			logrus.Debug("Timestamp format not specified, using default")
-		}
-
-		if c.LogParser.EventRegex == "" {
-			c.LogParser.EventRegex = ".*Analytics: (.*)"
-			logrus.Debug("Event regex not specified, using default")
-		}
+	if c.LogParser.LogLineRegex == "" {
+		c.LogParser.LogLineRegex = "^(.*)$" // Default: entire line
+		logrus.Debug("Log line regex not specified, using default for plain format")
 	}
 
 	logrus.WithField("timestamp_format", c.LogParser.TimestampFormat).Debug("Timestamp format validation passed")

@@ -10,7 +10,7 @@ to validate that analytics events are being fired correctly throughout user jour
 
 ## Features
 
-- **Flexible log parsing**: Parse various log formats including logcat, oslog, and simple text files
+- **Flexible log parsing**: Parse plain text log files with configurable formats
 - **Funnel analysis**: Track multi-step user conversion funnels
 - **Flexible configuration**: YAML-based configuration for defining funnels and steps
 - **Multiple output formats**: Text and JSON output formats
@@ -36,8 +36,6 @@ go install
 1. **Create a funnel configuration file** (`funnel.yaml`):
 
 ```yaml
-format: "plain"
-
 funnel:
   name: "Purchase Flow"
 
@@ -79,7 +77,6 @@ loglion funnel --config funnel.yaml --log logcat.txt [flags]
 
 - `--config, -c`: Path to funnel configuration file (required)
 - `--log, -l`: Path to log file (required)
-- `--format, -f`: Log format preset (default: "plain")
 - `--output, -o`: Output format (json, text) (default: "text")
 - `--timeout, -t`: Session timeout in minutes (default: 30)
 
@@ -106,8 +103,6 @@ The configuration file defines how LogLion should parse logs and what constitute
 ### Basic Structure
 
 ```yaml
-format: "plain"   # Log format (plain, logcat-json)
-
 funnel:
   name: "My Funnel"                    # Descriptive name
 
@@ -120,7 +115,7 @@ funnel:
 
 ### Log Parser Configuration
 
-The `plain` format supports flexible configuration for different log types:
+LogLion supports flexible configuration for different log types:
 
 ```yaml
 log_parser:
@@ -155,7 +150,7 @@ log_parser:
 See the `examples/` directory for:
 
 - `simple_funnel.yaml`: Simple text log configuration
-- `plain_funnel.yaml`: Plain text log configuration  
+- `plain_funnel.yaml`: Plain text log configuration
 - `oslog_funnel.yaml`: macOS oslog format configuration
 - `sample_simple.txt`: Simple text log sample
 - `sample_logcat_plain.txt`: Sample logcat file

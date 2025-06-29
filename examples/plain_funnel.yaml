@@ -1,7 +1,6 @@
 # Example funnel configuration for LogLion
 # yaml-language-server: $schema=../schema/funnel-config.schema.json
 
-format: "plain"  # Log format for plain text log files
 
 funnel:
   name: "Purchase Flow"

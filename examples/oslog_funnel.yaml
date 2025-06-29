@@ -1,7 +1,6 @@
 # Example funnel configuration for macOS oslog format
 # yaml-language-server: $schema=../schema/funnel-config.schema.json
 
-format: "plain"
 
 funnel:
   name: "App Launch Flow"
