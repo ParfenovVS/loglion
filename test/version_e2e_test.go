@@ -27,7 +27,7 @@ func TestVersionCommandE2E(t *testing.T) {
 		{
 			name:     "version command",
 			args:     []string{"version"},
-			expected: "0.1.3",
+			expected: "0.1.4",
 		},
 	}
 
