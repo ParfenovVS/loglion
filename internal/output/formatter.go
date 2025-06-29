@@ -3,7 +3,7 @@ package output
 import (
 	"encoding/json"
 	"fmt"
-	"loglion/internal/analyzer"
+	"github.com/parfenovvs/loglion/internal/analyzer"
 	"strings"
 
 	"github.com/sirupsen/logrus"

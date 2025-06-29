@@ -6,10 +6,10 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"loglion/internal/analyzer"
-	"loglion/internal/config"
-	"loglion/internal/output"
-	"loglion/internal/parser"
+	"github.com/parfenovvs/loglion/internal/analyzer"
+	"github.com/parfenovvs/loglion/internal/config"
+	"github.com/parfenovvs/loglion/internal/output"
+	"github.com/parfenovvs/loglion/internal/parser"
 )
 
 var funnelCmd = &cobra.Command{

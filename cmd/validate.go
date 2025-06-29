@@ -6,7 +6,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"loglion/internal/config"
+	"github.com/parfenovvs/loglion/internal/config"
 )
 
 var validateCmd = &cobra.Command{

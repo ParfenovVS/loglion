@@ -1,7 +1,7 @@
 package analyzer
 
 import (
-	"loglion/internal/parser"
+	"github.com/parfenovvs/loglion/internal/parser"
 	"testing"
 	"time"
 )

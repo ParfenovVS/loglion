@@ -1,4 +1,4 @@
-module loglion
+module github.com/parfenovvs/loglion
 
 go 1.24.4
 

@@ -2,7 +2,7 @@ package output
 
 import (
 	"encoding/json"
-	"loglion/internal/analyzer"
+	"github.com/parfenovvs/loglion/internal/analyzer"
 	"reflect"
 	"strings"
 	"testing"

@@ -1,8 +1,8 @@
 package analyzer
 
 import (
-	"loglion/internal/config"
-	"loglion/internal/parser"
+	"github.com/parfenovvs/loglion/internal/config"
+	"github.com/parfenovvs/loglion/internal/parser"
 	"regexp"
 
 	"github.com/sirupsen/logrus"

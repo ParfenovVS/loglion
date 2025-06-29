@@ -1,6 +1,6 @@
 package main
 
-import "loglion/cmd"
+import "github.com/parfenovvs/loglion/cmd"
 
 func main() {
 	cmd.Execute()
