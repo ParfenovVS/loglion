@@ -79,6 +79,35 @@ loglion funnel --parser-config parser.yaml --funnel-config funnel.yaml --log log
 - `--output, -o`: Output format (json, text) (default: "text")
 - `--max`: Limit analysis (stop after N complete sequences) (default: 0 = analyze all)
 
+### `count`
+
+Count occurrences of event patterns in log files.
+
+```bash
+loglion count --parser-config parser.yaml --log log.txt [event_patterns...] [flags]
+```
+
+**Arguments:**
+- `event_patterns`: One or more regular expression patterns to count (required)
+
+**Flags:**
+
+- `--parser-config, -p`: Path to parser configuration file (required)
+- `--log, -l`: Path to log file (required)
+- `--output, -o`: Output format (json, text) (default: "text")
+
+**Examples:**
+```bash
+# Count multiple patterns
+loglion count -p parser.yaml -l log.txt "login" "logout" "error"
+
+# Count with regex patterns
+loglion count -p parser.yaml -l log.txt "user_\\d+" "event_[a-z]+"
+
+# JSON output for automation
+loglion count -p parser.yaml -l log.txt --output json "login" "purchase"
+```
+
 ### `validate`
 
 Validate configuration files.
@@ -167,10 +196,16 @@ loglion funnel -p examples/logcat-parser.yaml -f examples/purchase-funnel.yaml -
 loglion funnel -p examples/oslog-parser.yaml -f examples/simple-funnel.yaml -l oslog.txt
 
 # JSON output for automation
-loglion funnel -p examples/logcat-parser.yaml -f examples/purchase-funnel.yaml -l app.log --output json
+loglion funnel -p examples/logcat-parser.yaml -f examples/purchase-funnel.yaml -l log.txt --output json
 
 # Limit analysis (stop after 5 complete sequences)
-loglion funnel -p examples/simple-parser.yaml -f examples/simple-funnel.yaml -l app.log --max 5
+loglion funnel -p examples/simple-parser.yaml -f examples/simple-funnel.yaml -l log.txt --max 5
+
+# Count event occurrences
+loglion count -p examples/simple-parser.yaml -l log.txt "login" "logout" "error"
+
+# Count with JSON output
+loglion count -p examples/logcat-parser.yaml -l log.txt --output json "purchase" "user_action"
 ```
 
 ## Examples

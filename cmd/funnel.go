@@ -89,7 +89,7 @@ Examples:
 		}
 
 		logrus.Debug("Formatting analysis results")
-		formattedOutput, err := formatter.Format(result)
+		formattedOutput, err := formatter.FormatFunnel(result)
 		if err != nil {
 			logrus.WithError(err).Error("Failed to format analysis output")
 			fmt.Fprintf(os.Stderr, "Error formatting output: %v\n", err)
