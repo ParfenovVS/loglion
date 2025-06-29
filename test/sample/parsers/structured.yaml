@@ -1,0 +1,5 @@
+# Structured log parser for e2e tests
+timestamp_format: "15:04:05"
+event_regex: ".*\\[(.*)\\]"
+json_extraction: false
+log_line_regex: "^(\\d{2}:\\d{2}:\\d{2})\\s+([A-Z]+)\\s+(.*)$"

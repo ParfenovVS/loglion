@@ -1,0 +1,12 @@
+# Purchase funnel for e2e tests
+name: "Purchase Flow"
+
+steps:
+  - name: "Product View"
+    event_pattern: "view_product"
+  
+  - name: "Add to Cart"
+    event_pattern: "add_cart"
+  
+  - name: "Purchase"
+    event_pattern: "purchase"

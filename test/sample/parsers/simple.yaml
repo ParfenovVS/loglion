@@ -1,0 +1,3 @@
+# Simple text parser for e2e tests
+event_regex: "^(.*)$"
+json_extraction: false

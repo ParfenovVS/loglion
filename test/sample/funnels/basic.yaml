@@ -1,0 +1,12 @@
+# Basic funnel for e2e tests
+name: "Basic User Flow"
+
+steps:
+  - name: "Login"
+    event_pattern: "login"
+  
+  - name: "Action"
+    event_pattern: "action"
+  
+  - name: "Logout"
+    event_pattern: "logout"

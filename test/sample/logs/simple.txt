@@ -1,0 +1,8 @@
+login user_123
+action button_click
+error network_timeout
+login user_456
+action form_submit
+logout user_123
+purchase success
+logout user_456

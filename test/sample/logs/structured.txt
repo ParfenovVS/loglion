@@ -1,0 +1,10 @@
+10:30:15 INFO User [login] user_123 started session
+10:30:20 INFO Product [view_product] product_456 by user_123
+10:30:25 INFO Cart [add_cart] product_456 quantity_1 user_123
+10:30:30 ERROR Network [timeout] connection failed
+10:30:35 INFO Payment [purchase] user_123 amount_29.99
+10:31:00 INFO User [login] user_789 started session
+10:31:05 INFO Product [view_product] product_123 by user_789
+10:31:10 INFO Cart [add_cart] product_123 quantity_2 user_789
+10:31:15 INFO User [logout] user_123 ended session
+10:31:20 INFO User [logout] user_789 ended session
