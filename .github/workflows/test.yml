@@ -21,4 +21,4 @@ jobs:
     
     - name: Run tests with coverage
       run: |
-        go test -cover ./... | tee -a $GITHUB_OUTPUT
+        go test -cover ./... >> $GITHUB_STEP_SUMMARY
