@@ -20,4 +20,8 @@ jobs:
       run: go mod download
     
     - name: Run tests with coverage
-      run: go test -cover ./... >> $GITHUB_OUTPUT
+      run: |
+        TEST_OUTPUT=$(go test -cover ./...)
+        echo "test-results<<EOF" >> $GITHUB_OUTPUT
+        echo "$TEST_OUTPUT" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
