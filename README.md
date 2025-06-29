@@ -58,7 +58,7 @@ steps:
 2. **Analyze your log file**:
 
 ```bash
-loglion funnel --parser-config parser.yaml --funnel-config funnel.yaml --log logcat.txt
+loglion funnel --parser-config parser.yaml --funnel-config funnel.yaml --log log.txt
 ```
 
 ## Commands
@@ -68,7 +68,7 @@ loglion funnel --parser-config parser.yaml --funnel-config funnel.yaml --log log
 Analyze log files for funnel validation.
 
 ```bash
-loglion funnel --parser-config parser.yaml --funnel-config funnel.yaml --log logcat.txt [flags]
+loglion funnel --parser-config parser.yaml --funnel-config funnel.yaml --log log.txt [flags]
 ```
 
 **Flags:**
