@@ -1,6 +1,6 @@
 # LogLion
 
-LogLion is a CLI tool for analyzing log files to track event funnels and count event patterns.
+LogLion is a CLI tool for analyzing log files to track event funnels and count event patterns. It's designed to help with automation testing of client analytics and telemetry, as well as debugging and monitoring logs.
 
 ## Installation
 
