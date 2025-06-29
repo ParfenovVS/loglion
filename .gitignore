@@ -57,5 +57,4 @@ examples/local/
 
 # Local files
 *.local.md
-.*
-.*/
+.claudeignore
