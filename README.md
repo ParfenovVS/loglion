@@ -62,17 +62,17 @@ log_parser:
 2. **Analyze your log file**:
 
 ```bash
-loglion analyze --config funnel.yaml --log logcat.txt
+loglion funnel --config funnel.yaml --log logcat.txt
 ```
 
 ## Commands
 
-### `analyze`
+### `funnel`
 
 Analyze log files for funnel validation.
 
 ```bash
-loglion analyze --config funnel.yaml --log logcat.txt [flags]
+loglion funnel --config funnel.yaml --log logcat.txt [flags]
 ```
 
 **Flags:**

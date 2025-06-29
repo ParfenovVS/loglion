@@ -12,15 +12,15 @@ import (
 	"loglion/internal/parser"
 )
 
-var analyzeCmd = &cobra.Command{
-	Use:   "analyze",
+var funnelCmd = &cobra.Command{
+	Use:   "funnel",
 	Short: "Analyze log files for funnel validation",
-	Long: `Analyze command processes log files according to the funnel configuration
+	Long: `Funnel command processes log files according to the funnel configuration
 and outputs completion rates and drop-off analysis.
 
 Examples:
-  loglion analyze --config funnel.yaml --log logcat.txt --format plain
-  loglion analyze -c funnel.yaml -l logcat.txt -f logcat-json --max 5`,
+  loglion funnel --config funnel.yaml --log logcat.txt --format plain
+  loglion funnel -c funnel.yaml -l logcat.txt -f logcat-json --max 5`,
 	Run: func(cmd *cobra.Command, args []string) {
 		configFile, _ := cmd.Flags().GetString("config")
 		logFile, _ := cmd.Flags().GetString("log")
@@ -125,14 +125,14 @@ Examples:
 }
 
 func init() {
-	rootCmd.AddCommand(analyzeCmd)
+	rootCmd.AddCommand(funnelCmd)
 
-	analyzeCmd.Flags().StringP("config", "c", "", "Path to funnel configuration file (required)")
-	analyzeCmd.Flags().StringP("log", "l", "", "Path to log file (required)")
-	analyzeCmd.Flags().StringP("format", "f", "plain", "Log format (plain, logcat-json)")
-	analyzeCmd.Flags().StringP("output", "o", "text", "Output format (json, text)")
-	analyzeCmd.Flags().IntP("max", "m", 0, "Maximum number of funnels to analyze (0 = analyze all events)")
+	funnelCmd.Flags().StringP("config", "c", "", "Path to funnel configuration file (required)")
+	funnelCmd.Flags().StringP("log", "l", "", "Path to log file (required)")
+	funnelCmd.Flags().StringP("format", "f", "plain", "Log format (plain, logcat-json)")
+	funnelCmd.Flags().StringP("output", "o", "text", "Output format (json, text)")
+	funnelCmd.Flags().IntP("max", "m", 0, "Maximum number of funnels to analyze (0 = analyze all events)")
 
-	analyzeCmd.MarkFlagRequired("config")
-	analyzeCmd.MarkFlagRequired("log")
+	funnelCmd.MarkFlagRequired("config")
+	funnelCmd.MarkFlagRequired("log")
 }
