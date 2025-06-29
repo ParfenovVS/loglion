@@ -131,7 +131,7 @@ func init() {
 	funnelCmd.Flags().StringP("log", "l", "", "Path to log file (required)")
 	funnelCmd.Flags().StringP("format", "f", "plain", "Log format (plain, logcat-json)")
 	funnelCmd.Flags().StringP("output", "o", "text", "Output format (json, text)")
-	funnelCmd.Flags().IntP("max", "m", 0, "Maximum number of funnels to analyze (0 = analyze all events)")
+	funnelCmd.Flags().IntP("max", "m", 0, "Maximum number of successful funnels to analyze (0 = analyze all funnels)")
 
 	funnelCmd.MarkFlagRequired("config")
 	funnelCmd.MarkFlagRequired("log")
