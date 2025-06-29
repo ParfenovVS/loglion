@@ -44,11 +44,11 @@ func NewFunnelAnalyzer(cfg *config.FunnelConfig) *FunnelAnalyzer {
 	}
 }
 
-func (fa *FunnelAnalyzer) AnalyzeFunnel(entries []*parser.LogEntry, max int) *FunnelResult {
+func (fa *FunnelAnalyzer) AnalyzeFunnel(entries []*parser.LogEntry, limit int) *FunnelResult {
 	logrus.WithFields(logrus.Fields{
 		"funnel_name": fa.config.Name,
 		"entry_count": len(entries),
-		"max":         max,
+		"limit":       limit,
 	}).Info("Starting funnel analysis")
 
 	if len(entries) == 0 {
@@ -83,7 +83,7 @@ func (fa *FunnelAnalyzer) AnalyzeFunnel(entries []*parser.LogEntry, max int) *Fu
 	var currentStep int
 	var conversionsFound int
 
-	if max == 0 {
+	if limit == 0 {
 		// Mode 1: Track sequential funnel progression through the entire log
 		logrus.Debug("Mode 1: Tracking sequential funnel progression")
 		currentStep = 0
@@ -116,13 +116,13 @@ func (fa *FunnelAnalyzer) AnalyzeFunnel(entries []*parser.LogEntry, max int) *Fu
 			}
 		}
 	} else {
-		// Mode 2: Track complete funnel conversions, stop after 'max' conversions
-		logrus.WithField("target_conversions", max).Debug("Mode 2: Tracking complete funnel conversions")
+		// Mode 2: Track complete funnel conversions, stop after 'limit' conversions
+		logrus.WithField("target_conversions", limit).Debug("Mode 2: Tracking complete funnel conversions")
 		conversionsFound = 0
 		currentStep = 0
 
 		for entryIndex, entry := range entries {
-			if conversionsFound >= max {
+			if conversionsFound >= limit {
 				logrus.WithField("conversions_found", conversionsFound).Debug("Target conversions reached, stopping analysis")
 				break
 			}
@@ -131,7 +131,7 @@ func (fa *FunnelAnalyzer) AnalyzeFunnel(entries []*parser.LogEntry, max int) *Fu
 				logrus.Debug("Funnel completed, resetting for next conversion")
 				conversionsFound++
 				currentStep = 0 // Reset for next conversion
-				if conversionsFound >= max {
+				if conversionsFound >= limit {
 					break
 				}
 			}
@@ -164,7 +164,7 @@ func (fa *FunnelAnalyzer) AnalyzeFunnel(entries []*parser.LogEntry, max int) *Fu
 		"matched_events":  matchedEvents,
 		"completed_steps": currentStep,
 		"total_steps":     len(fa.config.Steps),
-		"mode":            map[bool]string{true: "count_all", false: "track_conversions"}[max == 0],
+		"mode":            map[bool]string{true: "count_all", false: "track_conversions"}[limit == 0],
 	}).Info("Funnel analysis completed")
 
 	// Calculate percentages based on first step
@@ -214,7 +214,7 @@ func (fa *FunnelAnalyzer) AnalyzeFunnel(entries []*parser.LogEntry, max int) *Fu
 
 	// Determine if funnel was completed
 	var funnelCompleted bool
-	if max == 0 {
+	if limit == 0 {
 		// In Mode 1, check if we found any complete conversions
 		funnelCompleted = conversionsFound > 0
 	} else {

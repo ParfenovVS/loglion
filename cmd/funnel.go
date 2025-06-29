@@ -20,20 +20,20 @@ and outputs completion rates and drop-off analysis.
 
 Examples:
   loglion funnel --parser-config parser.yaml --funnel-config funnel.yaml --log logcat.txt
-  loglion funnel -p parser.yaml -f funnel.yaml -l logcat.txt --max 5`,
+  loglion funnel -p parser.yaml -f funnel.yaml -l logcat.txt --limit 5`,
 	Run: func(cmd *cobra.Command, args []string) {
 		parserConfigFile, _ := cmd.Flags().GetString("parser-config")
 		funnelConfigFile, _ := cmd.Flags().GetString("funnel-config")
 		logFile, _ := cmd.Flags().GetString("log")
 		outputFormat, _ := cmd.Flags().GetString("output")
-		max, _ := cmd.Flags().GetInt("max")
+		limit, _ := cmd.Flags().GetInt("limit")
 
 		logrus.WithFields(logrus.Fields{
 			"parser_config_file": parserConfigFile,
 			"funnel_config_file": funnelConfigFile,
 			"log_file":           logFile,
 			"output_format":      outputFormat,
-			"max":                max,
+			"limit":              limit,
 		}).Info("Starting funnel analysis")
 
 		// Load parser configuration
@@ -76,7 +76,7 @@ Examples:
 		}
 
 		logrus.Debug("Starting funnel analysis")
-		result := funnelAnalyzer.AnalyzeFunnel(entries, max)
+		result := funnelAnalyzer.AnalyzeFunnel(entries, limit)
 
 		// Format and output results
 		logrus.WithField("output_format", outputFormat).Debug("Creating output formatter")
@@ -108,7 +108,7 @@ func init() {
 	funnelCmd.Flags().StringP("funnel-config", "f", "", "Path to funnel configuration file (required)")
 	funnelCmd.Flags().StringP("log", "l", "", "Path to log file (required)")
 	funnelCmd.Flags().StringP("output", "o", "text", "Output format (json, text)")
-	funnelCmd.Flags().IntP("max", "m", 0, "Maximum number of successful funnels to analyze (0 = analyze all funnels)")
+	funnelCmd.Flags().Int("limit", 0, "Maximum number of successful funnels to analyze (0 = analyze all funnels)")
 
 	funnelCmd.MarkFlagRequired("parser-config")
 	funnelCmd.MarkFlagRequired("funnel-config")

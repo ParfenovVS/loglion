@@ -31,7 +31,7 @@ func TestAnalyzeFunnel(t *testing.T) {
 		name              string
 		config            *config.FunnelConfig
 		entries           []*parser.LogEntry
-		max               int
+		limit             int
 		wantCompleted     bool
 		wantStepCounts    []int
 		wantTotalEvents   int
@@ -46,7 +46,7 @@ func TestAnalyzeFunnel(t *testing.T) {
 				},
 			},
 			entries:           []*parser.LogEntry{},
-			max:               0,
+			limit:             0,
 			wantCompleted:     false,
 			wantStepCounts:    []int{},
 			wantTotalEvents:   0,
@@ -65,7 +65,7 @@ func TestAnalyzeFunnel(t *testing.T) {
 				{Message: "event1", Timestamp: time.Now()},
 				{Message: "event2", Timestamp: time.Now()},
 			},
-			max:               0,
+			limit:             0,
 			wantCompleted:     true,
 			wantStepCounts:    []int{1, 1},
 			wantTotalEvents:   2,
@@ -84,7 +84,7 @@ func TestAnalyzeFunnel(t *testing.T) {
 				{Message: "event1", Timestamp: time.Now()},
 				{Message: "other_event", Timestamp: time.Now()},
 			},
-			max:               0,
+			limit:             0,
 			wantCompleted:     false,
 			wantStepCounts:    []int{1, 0},
 			wantTotalEvents:   2,
@@ -105,7 +105,7 @@ func TestAnalyzeFunnel(t *testing.T) {
 				{Message: "event1", Timestamp: time.Now()},
 				{Message: "event2", Timestamp: time.Now()},
 			},
-			max:               1,
+			limit:             1,
 			wantCompleted:     true,
 			wantStepCounts:    []int{1, 1},
 			wantTotalEvents:   4,
@@ -125,7 +125,7 @@ func TestAnalyzeFunnel(t *testing.T) {
 				{Message: "event1", Timestamp: time.Now()},
 				{Message: "event2", Timestamp: time.Now()},
 			},
-			max:               0,
+			limit:             0,
 			wantCompleted:     true,
 			wantStepCounts:    []int{1, 1},
 			wantTotalEvents:   3,
@@ -136,7 +136,7 @@ func TestAnalyzeFunnel(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			analyzer := NewFunnelAnalyzer(tt.config)
-			result := analyzer.AnalyzeFunnel(tt.entries, tt.max)
+			result := analyzer.AnalyzeFunnel(tt.entries, tt.limit)
 
 			if result.FunnelCompleted != tt.wantCompleted {
 				t.Errorf("AnalyzeFunnel() FunnelCompleted = %v, want %v", result.FunnelCompleted, tt.wantCompleted)

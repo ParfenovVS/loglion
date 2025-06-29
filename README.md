@@ -77,7 +77,7 @@ loglion funnel --parser-config parser.yaml --funnel-config funnel.yaml --log log
 - `--funnel-config, -f`: Path to funnel configuration file (required)
 - `--log, -l`: Path to log file (required)
 - `--output, -o`: Output format (json, text) (default: "text")
-- `--max`: Limit analysis (stop after N complete sequences) (default: 0 = analyze all)
+- `--limit`: Limit analysis (stop after N complete sequences) (default: 0 = analyze all)
 
 ### `count`
 
@@ -199,7 +199,7 @@ loglion funnel -p examples/oslog-parser.yaml -f examples/simple-funnel.yaml -l o
 loglion funnel -p examples/logcat-parser.yaml -f examples/purchase-funnel.yaml -l log.txt --output json
 
 # Limit analysis (stop after 5 complete sequences)
-loglion funnel -p examples/simple-parser.yaml -f examples/simple-funnel.yaml -l log.txt --max 5
+loglion funnel -p examples/simple-parser.yaml -f examples/simple-funnel.yaml -l log.txt --limit 5
 
 # Count event occurrences
 loglion count -p examples/simple-parser.yaml -l log.txt "login" "logout" "error"
