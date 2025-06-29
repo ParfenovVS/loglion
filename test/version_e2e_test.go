@@ -35,7 +35,7 @@ func TestVersionCommandE2E(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cmd := exec.Command("./loglion_test", tt.args...)
 			cmd.Dir = "."
-			
+
 			output, err := cmd.Output()
 			if err != nil {
 				t.Fatalf("Command failed: %v", err)
@@ -64,7 +64,7 @@ func TestVersionCommandHelp(t *testing.T) {
 
 	cmd := exec.Command("./loglion_test", "version", "--help")
 	cmd.Dir = "."
-	
+
 	output, err := cmd.Output()
 	if err != nil {
 		t.Fatalf("Command failed: %v", err)

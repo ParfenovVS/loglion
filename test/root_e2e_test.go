@@ -47,7 +47,7 @@ func TestRootCommandE2E(t *testing.T) {
 				"loglion [command]",
 				"Available Commands:",
 				"count",
-				"funnel", 
+				"funnel",
 				"validate",
 				"version",
 				"Flags:",
@@ -71,7 +71,7 @@ func TestRootCommandE2E(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cmd := exec.Command("./loglion_test", tt.args...)
 			cmd.Dir = "."
-			
+
 			output, err := cmd.Output()
 			if err != nil {
 				t.Fatalf("Command failed: %v", err)
@@ -118,7 +118,7 @@ func TestRootCommandVerboseFlag(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cmd := exec.Command("./loglion_test", tt.args...)
 			cmd.Dir = "."
-			
+
 			output, err := cmd.Output()
 			if err != nil {
 				t.Fatalf("Command failed: %v", err)
@@ -156,7 +156,7 @@ func TestRootCommandInvalidFlag(t *testing.T) {
 
 	cmd := exec.Command("./loglion_test", "--invalid-flag")
 	cmd.Dir = "."
-	
+
 	output, err := cmd.CombinedOutput()
 	if err == nil {
 		t.Fatal("Expected command to fail with invalid flag, but it succeeded")
@@ -165,7 +165,7 @@ func TestRootCommandInvalidFlag(t *testing.T) {
 	actual := string(output)
 	expectedContains := []string{
 		"unknown flag",
-		"--invalid-flag", 
+		"--invalid-flag",
 	}
 
 	for _, expected := range expectedContains {
@@ -190,7 +190,7 @@ func TestRootCommandInvalidSubcommand(t *testing.T) {
 
 	cmd := exec.Command("./loglion_test", "invalid-command")
 	cmd.Dir = "."
-	
+
 	output, err := cmd.CombinedOutput()
 	if err == nil {
 		t.Fatal("Expected command to fail with invalid subcommand, but it succeeded")
