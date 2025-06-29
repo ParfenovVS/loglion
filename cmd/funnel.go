@@ -19,37 +19,52 @@ var funnelCmd = &cobra.Command{
 and outputs completion rates and drop-off analysis.
 
 Examples:
-  loglion funnel --config funnel.yaml --log logcat.txt
-  loglion funnel -c funnel.yaml -l logcat.txt --max 5`,
+  loglion funnel --parser-config parser.yaml --funnel-config funnel.yaml --log logcat.txt
+  loglion funnel -p parser.yaml -f funnel.yaml -l logcat.txt --max 5`,
 	Run: func(cmd *cobra.Command, args []string) {
-		configFile, _ := cmd.Flags().GetString("config")
+		parserConfigFile, _ := cmd.Flags().GetString("parser-config")
+		funnelConfigFile, _ := cmd.Flags().GetString("funnel-config")
 		logFile, _ := cmd.Flags().GetString("log")
 		outputFormat, _ := cmd.Flags().GetString("output")
 		max, _ := cmd.Flags().GetInt("max")
 
 		logrus.WithFields(logrus.Fields{
-			"config_file":   configFile,
-			"log_file":      logFile,
-			"output_format": outputFormat,
-			"max":           max,
+			"parser_config_file": parserConfigFile,
+			"funnel_config_file": funnelConfigFile,
+			"log_file":           logFile,
+			"output_format":      outputFormat,
+			"max":                max,
 		}).Info("Starting funnel analysis")
 
-		// Load configuration
-		logrus.Debug("Loading configuration file")
-		cfg, err := config.LoadConfig(configFile)
+		// Load parser configuration
+		logrus.Debug("Loading parser configuration file")
+		parserCfg, err := config.LoadParserConfig(parserConfigFile)
 		if err != nil {
-			logrus.WithError(err).WithField("config_file", configFile).Error("Failed to load config")
-			fmt.Fprintf(os.Stderr, "Error loading config: %v\n", err)
+			logrus.WithError(err).WithField("parser_config_file", parserConfigFile).Error("Failed to load parser config")
+			fmt.Fprintf(os.Stderr, "Error loading parser config: %v\n", err)
+			os.Exit(1)
+		}
+
+		// Load funnel configuration
+		logrus.Debug("Loading funnel configuration file")
+		funnelCfg, err := config.LoadFunnelConfig(funnelConfigFile)
+		if err != nil {
+			logrus.WithError(err).WithField("funnel_config_file", funnelConfigFile).Error("Failed to load funnel config")
+			fmt.Fprintf(os.Stderr, "Error loading funnel config: %v\n", err)
 			os.Exit(1)
 		}
 
 		// Create parser
 		logrus.Debug("Creating log parser")
 		logParser := parser.NewParserWithConfig(
-			cfg.LogParser.TimestampFormat,
-			cfg.LogParser.EventRegex,
-			cfg.LogParser.JSONExtraction,
-			cfg.LogParser.LogLineRegex)
+			parserCfg.TimestampFormat,
+			parserCfg.EventRegex,
+			parserCfg.JSONExtraction,
+			parserCfg.LogLineRegex)
+
+		// Create analyzer
+		logrus.Debug("Creating funnel analyzer")
+		funnelAnalyzer := analyzer.NewFunnelAnalyzer(funnelCfg)
 
 		// Parse log file
 		logrus.WithField("log_file", logFile).Debug("Starting log file parsing")
@@ -59,10 +74,6 @@ Examples:
 			fmt.Fprintf(os.Stderr, "Error parsing log file: %v\n", err)
 			os.Exit(1)
 		}
-
-		// Create analyzer and analyze funnel
-		logrus.Debug("Creating funnel analyzer")
-		funnelAnalyzer := analyzer.NewFunnelAnalyzer(cfg)
 
 		logrus.Debug("Starting funnel analysis")
 		result := funnelAnalyzer.AnalyzeFunnel(entries, max)
@@ -93,11 +104,13 @@ Examples:
 func init() {
 	rootCmd.AddCommand(funnelCmd)
 
-	funnelCmd.Flags().StringP("config", "c", "", "Path to funnel configuration file (required)")
+	funnelCmd.Flags().StringP("parser-config", "p", "", "Path to parser configuration file (required)")
+	funnelCmd.Flags().StringP("funnel-config", "f", "", "Path to funnel configuration file (required)")
 	funnelCmd.Flags().StringP("log", "l", "", "Path to log file (required)")
 	funnelCmd.Flags().StringP("output", "o", "text", "Output format (json, text)")
 	funnelCmd.Flags().IntP("max", "m", 0, "Maximum number of successful funnels to analyze (0 = analyze all funnels)")
 
-	funnelCmd.MarkFlagRequired("config")
+	funnelCmd.MarkFlagRequired("parser-config")
+	funnelCmd.MarkFlagRequired("funnel-config")
 	funnelCmd.MarkFlagRequired("log")
 }

@@ -9,7 +9,7 @@ import (
 )
 
 type FunnelAnalyzer struct {
-	config *config.Config
+	config *config.FunnelConfig
 }
 
 type FunnelResult struct {
@@ -33,10 +33,10 @@ type DropOff struct {
 	DropOffRate float64 `json:"drop_off_rate"`
 }
 
-func NewFunnelAnalyzer(cfg *config.Config) *FunnelAnalyzer {
+func NewFunnelAnalyzer(cfg *config.FunnelConfig) *FunnelAnalyzer {
 	logrus.WithFields(logrus.Fields{
-		"funnel_name": cfg.Funnel.Name,
-		"step_count":  len(cfg.Funnel.Steps),
+		"funnel_name": cfg.Name,
+		"step_count":  len(cfg.Steps),
 	}).Debug("Creating new funnel analyzer")
 
 	return &FunnelAnalyzer{
@@ -46,7 +46,7 @@ func NewFunnelAnalyzer(cfg *config.Config) *FunnelAnalyzer {
 
 func (fa *FunnelAnalyzer) AnalyzeFunnel(entries []*parser.LogEntry, max int) *FunnelResult {
 	logrus.WithFields(logrus.Fields{
-		"funnel_name": fa.config.Funnel.Name,
+		"funnel_name": fa.config.Name,
 		"entry_count": len(entries),
 		"max":         max,
 	}).Info("Starting funnel analysis")
@@ -54,7 +54,7 @@ func (fa *FunnelAnalyzer) AnalyzeFunnel(entries []*parser.LogEntry, max int) *Fu
 	if len(entries) == 0 {
 		logrus.Warn("No log entries provided for analysis")
 		return &FunnelResult{
-			FunnelName:          fa.config.Funnel.Name,
+			FunnelName:          fa.config.Name,
 			TotalEventsAnalyzed: 0,
 			FunnelCompleted:     false,
 			Steps:               []StepResult{},
@@ -62,11 +62,11 @@ func (fa *FunnelAnalyzer) AnalyzeFunnel(entries []*parser.LogEntry, max int) *Fu
 		}
 	}
 
-	stepResults := make([]StepResult, len(fa.config.Funnel.Steps))
-	stepCounts := make([]int, len(fa.config.Funnel.Steps))
+	stepResults := make([]StepResult, len(fa.config.Steps))
+	stepCounts := make([]int, len(fa.config.Steps))
 
 	// Initialize step results
-	for i, step := range fa.config.Funnel.Steps {
+	for i, step := range fa.config.Steps {
 		stepResults[i] = StepResult{
 			Name:       step.Name,
 			EventCount: 0,
@@ -90,8 +90,8 @@ func (fa *FunnelAnalyzer) AnalyzeFunnel(entries []*parser.LogEntry, max int) *Fu
 
 		for entryIndex, entry := range entries {
 			// Check if current entry matches the expected next step
-			if currentStep < len(fa.config.Funnel.Steps) {
-				step := fa.config.Funnel.Steps[currentStep]
+			if currentStep < len(fa.config.Steps) {
+				step := fa.config.Steps[currentStep]
 				if fa.eventMatchesStep(entry, step) {
 					stepCounts[currentStep]++
 					matchedEvents++
@@ -106,7 +106,7 @@ func (fa *FunnelAnalyzer) AnalyzeFunnel(entries []*parser.LogEntry, max int) *Fu
 					}).Debug("Event matched funnel step")
 
 					// Check if funnel was completed
-					if currentStep >= len(fa.config.Funnel.Steps) {
+					if currentStep >= len(fa.config.Steps) {
 						conversionsFound++
 						logrus.WithField("conversions_total", conversionsFound).Debug("Funnel completed")
 						// Reset to look for additional complete funnels
@@ -127,7 +127,7 @@ func (fa *FunnelAnalyzer) AnalyzeFunnel(entries []*parser.LogEntry, max int) *Fu
 				break
 			}
 
-			if currentStep >= len(fa.config.Funnel.Steps) {
+			if currentStep >= len(fa.config.Steps) {
 				logrus.Debug("Funnel completed, resetting for next conversion")
 				conversionsFound++
 				currentStep = 0 // Reset for next conversion
@@ -136,7 +136,7 @@ func (fa *FunnelAnalyzer) AnalyzeFunnel(entries []*parser.LogEntry, max int) *Fu
 				}
 			}
 
-			step := fa.config.Funnel.Steps[currentStep]
+			step := fa.config.Steps[currentStep]
 			if fa.eventMatchesStep(entry, step) {
 				stepCounts[currentStep]++
 				matchedEvents++
@@ -153,7 +153,7 @@ func (fa *FunnelAnalyzer) AnalyzeFunnel(entries []*parser.LogEntry, max int) *Fu
 		}
 
 		// Check if funnel was completed at the end
-		if currentStep >= len(fa.config.Funnel.Steps) {
+		if currentStep >= len(fa.config.Steps) {
 			logrus.Debug("Funnel completed at end of log")
 			conversionsFound++
 		}
@@ -163,7 +163,7 @@ func (fa *FunnelAnalyzer) AnalyzeFunnel(entries []*parser.LogEntry, max int) *Fu
 		"total_entries":   len(entries),
 		"matched_events":  matchedEvents,
 		"completed_steps": currentStep,
-		"total_steps":     len(fa.config.Funnel.Steps),
+		"total_steps":     len(fa.config.Steps),
 		"mode":            map[bool]string{true: "count_all", false: "track_conversions"}[max == 0],
 	}).Info("Funnel analysis completed")
 
@@ -195,8 +195,8 @@ func (fa *FunnelAnalyzer) AnalyzeFunnel(entries []*parser.LogEntry, max int) *Fu
 			dropOffRate := float64(lost) / float64(stepCounts[i]) * 100.0
 
 			dropOff := DropOff{
-				From:        fa.config.Funnel.Steps[i].Name,
-				To:          fa.config.Funnel.Steps[i+1].Name,
+				From:        fa.config.Steps[i].Name,
+				To:          fa.config.Steps[i+1].Name,
 				EventsLost:  lost,
 				DropOffRate: dropOffRate,
 			}
@@ -224,7 +224,7 @@ func (fa *FunnelAnalyzer) AnalyzeFunnel(entries []*parser.LogEntry, max int) *Fu
 	logrus.WithField("funnel_completed", funnelCompleted).Debug("Funnel completion status determined")
 
 	result := &FunnelResult{
-		FunnelName:          fa.config.Funnel.Name,
+		FunnelName:          fa.config.Name,
 		TotalEventsAnalyzed: len(entries),
 		FunnelCompleted:     funnelCompleted,
 		Steps:               stepResults,

@@ -1,0 +1,14 @@
+# Simple funnel configuration
+# yaml-language-server: $schema=../schema/funnel-config.schema.json
+
+name: "Simple Event Flow"
+
+steps:
+  - name: "Event 1"
+    event_pattern: "event_1"
+
+  - name: "Event 2" 
+    event_pattern: "event_2"
+
+  - name: "Event 3"
+    event_pattern: "event_3"

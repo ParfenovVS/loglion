@@ -6,33 +6,6 @@ import (
 	"time"
 )
 
-func TestLogFormat_String(t *testing.T) {
-	tests := []struct {
-		name   string
-		format LogFormat
-		want   string
-	}{
-		{
-			name:   "plain format",
-			format: PlainFormat,
-			want:   "plain",
-		},
-		{
-			name:   "logcat json format",
-			format: LogcatJSONFormat,
-			want:   "logcat-json",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := string(tt.format); got != tt.want {
-				t.Errorf("LogFormat = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestLogEntry_Fields(t *testing.T) {
 	timestamp := time.Now()
 	eventData := map[string]interface{}{
@@ -75,53 +48,26 @@ func TestLogEntry_Fields(t *testing.T) {
 }
 
 func TestNewParser(t *testing.T) {
-	tests := []struct {
-		name   string
-		format LogFormat
-		want   string // We'll check the type name as string since we can't directly compare interface types
-	}{
-		{
-			name:   "plain format",
-			format: PlainFormat,
-			want:   "*parser.PlainParser",
-		},
-		{
-			name:   "logcat json format",
-			format: LogcatJSONFormat,
-			want:   "*parser.LogcatJSONParser",
-		},
-		{
-			name:   "unknown format defaults to plain",
-			format: LogFormat("unknown"),
-			want:   "*parser.PlainParser",
-		},
-		{
-			name:   "empty format defaults to plain",
-			format: LogFormat(""),
-			want:   "*parser.PlainParser",
-		},
+	parser := NewParser()
+	if parser == nil {
+		t.Error("NewParser() returned nil")
+		return
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			parser := NewParser(tt.format)
-			if parser == nil {
-				t.Errorf("NewParser() returned nil")
-				return
-			}
+	// Test that parser implements Parser interface
+	var _ Parser = parser
 
-			got := reflect.TypeOf(parser).String()
-			if got != tt.want {
-				t.Errorf("NewParser() type = %v, want %v", got, tt.want)
-			}
-		})
+	// Test that the default parser is a PlainParser
+	got := reflect.TypeOf(parser).String()
+	want := "*parser.PlainParser"
+	if got != want {
+		t.Errorf("NewParser() type = %v, want %v", got, want)
 	}
 }
 
 func TestNewParserWithConfig(t *testing.T) {
 	tests := []struct {
 		name            string
-		format          LogFormat
 		timestampFormat string
 		eventRegex      string
 		jsonExtraction  bool
@@ -129,8 +75,7 @@ func TestNewParserWithConfig(t *testing.T) {
 		want            string
 	}{
 		{
-			name:            "plain with custom config",
-			format:          PlainFormat,
+			name:            "basic_config",
 			timestampFormat: "01-02 15:04:05.000",
 			eventRegex:      `.*Analytics.*: (.*)`,
 			jsonExtraction:  true,
@@ -138,17 +83,15 @@ func TestNewParserWithConfig(t *testing.T) {
 			want:            "*parser.PlainParser",
 		},
 		{
-			name:            "logcat json with custom config",
-			format:          LogcatJSONFormat,
-			timestampFormat: "01-02 15:04:05.000",
-			eventRegex:      `.*Analytics.*: (.*)`,
+			name:            "minimal_config",
+			timestampFormat: "",
+			eventRegex:      `test`,
 			jsonExtraction:  false,
 			logLineRegex:    "",
-			want:            "*parser.LogcatJSONParser",
+			want:            "*parser.PlainParser",
 		},
 		{
-			name:            "unknown format defaults to plain with config",
-			format:          LogFormat("invalid"),
+			name:            "json_extraction_enabled",
 			timestampFormat: "01-02 15:04:05.000",
 			eventRegex:      `.*Test.*: (.*)`,
 			jsonExtraction:  true,
@@ -159,7 +102,7 @@ func TestNewParserWithConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			parser := NewParserWithConfig(tt.format, tt.timestampFormat, tt.eventRegex, tt.jsonExtraction, tt.logLineRegex)
+			parser := NewParserWithConfig(tt.timestampFormat, tt.eventRegex, tt.jsonExtraction, tt.logLineRegex)
 			if parser == nil {
 				t.Errorf("NewParserWithConfig() returned nil")
 				return
@@ -174,49 +117,57 @@ func TestNewParserWithConfig(t *testing.T) {
 }
 
 func TestParser_Interface(t *testing.T) {
-	// Test that returned parsers implement the Parser interface
-	formats := []LogFormat{
-		PlainFormat,
-		LogcatJSONFormat,
+	// Test that returned parser implements the Parser interface
+	parser := NewParser()
+
+	// Check that parser implements Parser interface by calling interface methods
+	// This is a basic compile-time check
+	var _ Parser = parser
+
+	// Test that methods exist and don't panic (basic smoke test)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Errorf("Parser methods should not panic on basic calls")
+		}
+	}()
+
+	// Test Parse with empty string (should return error, not panic)
+	_, err := parser.Parse("")
+	if err == nil {
+		t.Errorf("Parse(\"\") should return error for empty input")
 	}
 
-	for _, format := range formats {
-		t.Run(string(format), func(t *testing.T) {
-			parser := NewParser(format)
-
-			// Check that parser implements Parser interface by calling interface methods
-			// This is a basic compile-time check
-			var _ Parser = parser
-
-			// Test that methods exist and don't panic (basic smoke test)
-			defer func() {
-				if r := recover(); r != nil {
-					t.Errorf("Parser methods should not panic on basic calls")
-				}
-			}()
-
-			// Test Parse with empty string (should return error, not panic)
-			_, err := parser.Parse("")
-			if err == nil {
-				t.Errorf("Parse(\"\") should return error for empty input")
-			}
-
-			// Test ParseFile with invalid path (should return error, not panic)
-			_, err = parser.ParseFile("/nonexistent/file.txt")
-			if err == nil {
-				t.Errorf("ParseFile() should return error for nonexistent file")
-			}
-		})
+	// Test ParseFile with invalid path (should return error, not panic)
+	_, err = parser.ParseFile("/nonexistent/file.txt")
+	if err == nil {
+		t.Errorf("ParseFile() should return error for nonexistent file")
 	}
 }
 
-func TestLogFormat_Constants(t *testing.T) {
-	// Test that constants have expected values
-	if PlainFormat != "plain" {
-		t.Errorf("PlainFormat = %v, want %v", PlainFormat, "plain")
+func TestNewParserWithConfig_Interface(t *testing.T) {
+	// Test that NewParserWithConfig also returns a proper Parser interface
+	parser := NewParserWithConfig("", "test", false, "")
+
+	// Check that parser implements Parser interface
+	var _ Parser = parser
+
+	// Test that methods exist and don't panic
+	defer func() {
+		if r := recover(); r != nil {
+			t.Errorf("Parser methods should not panic on basic calls")
+		}
+	}()
+
+	// Test Parse with empty string
+	_, err := parser.Parse("")
+	if err == nil {
+		t.Errorf("Parse(\"\") should return error for empty input")
 	}
-	if LogcatJSONFormat != "logcat-json" {
-		t.Errorf("LogcatJSONFormat = %v, want %v", LogcatJSONFormat, "logcat-json")
+
+	// Test ParseFile with invalid path
+	_, err = parser.ParseFile("/nonexistent/file.txt")
+	if err == nil {
+		t.Errorf("ParseFile() should return error for nonexistent file")
 	}
 }
 

@@ -8,13 +8,11 @@ import (
 )
 
 func TestNewFunnelAnalyzer(t *testing.T) {
-	cfg := &config.Config{
-		Funnel: config.Funnel{
-			Name: "test_funnel",
-			Steps: []config.Step{
-				{Name: "step1", EventPattern: "event1"},
-				{Name: "step2", EventPattern: "event2"},
-			},
+	cfg := &config.FunnelConfig{
+		Name: "test_funnel",
+		Steps: []config.Step{
+			{Name: "step1", EventPattern: "event1"},
+			{Name: "step2", EventPattern: "event2"},
 		},
 	}
 
@@ -31,7 +29,7 @@ func TestNewFunnelAnalyzer(t *testing.T) {
 func TestAnalyzeFunnel(t *testing.T) {
 	tests := []struct {
 		name              string
-		config            *config.Config
+		config            *config.FunnelConfig
 		entries           []*parser.LogEntry
 		max               int
 		wantCompleted     bool
@@ -41,12 +39,10 @@ func TestAnalyzeFunnel(t *testing.T) {
 	}{
 		{
 			name: "empty_entries",
-			config: &config.Config{
-				Funnel: config.Funnel{
-					Name: "test",
-					Steps: []config.Step{
-						{Name: "step1", EventPattern: "event1"},
-					},
+			config: &config.FunnelConfig{
+				Name: "test",
+				Steps: []config.Step{
+					{Name: "step1", EventPattern: "event1"},
 				},
 			},
 			entries:           []*parser.LogEntry{},
@@ -58,13 +54,11 @@ func TestAnalyzeFunnel(t *testing.T) {
 		},
 		{
 			name: "single_complete_funnel_mode1",
-			config: &config.Config{
-				Funnel: config.Funnel{
-					Name: "test",
-					Steps: []config.Step{
-						{Name: "step1", EventPattern: "event1"},
-						{Name: "step2", EventPattern: "event2"},
-					},
+			config: &config.FunnelConfig{
+				Name: "test",
+				Steps: []config.Step{
+					{Name: "step1", EventPattern: "event1"},
+					{Name: "step2", EventPattern: "event2"},
 				},
 			},
 			entries: []*parser.LogEntry{
@@ -79,13 +73,11 @@ func TestAnalyzeFunnel(t *testing.T) {
 		},
 		{
 			name: "incomplete_funnel",
-			config: &config.Config{
-				Funnel: config.Funnel{
-					Name: "test",
-					Steps: []config.Step{
-						{Name: "step1", EventPattern: "event1"},
-						{Name: "step2", EventPattern: "event2"},
-					},
+			config: &config.FunnelConfig{
+				Name: "test",
+				Steps: []config.Step{
+					{Name: "step1", EventPattern: "event1"},
+					{Name: "step2", EventPattern: "event2"},
 				},
 			},
 			entries: []*parser.LogEntry{
@@ -100,13 +92,11 @@ func TestAnalyzeFunnel(t *testing.T) {
 		},
 		{
 			name: "multiple_complete_funnels_mode2",
-			config: &config.Config{
-				Funnel: config.Funnel{
-					Name: "test",
-					Steps: []config.Step{
-						{Name: "step1", EventPattern: "event1"},
-						{Name: "step2", EventPattern: "event2"},
-					},
+			config: &config.FunnelConfig{
+				Name: "test",
+				Steps: []config.Step{
+					{Name: "step1", EventPattern: "event1"},
+					{Name: "step2", EventPattern: "event2"},
 				},
 			},
 			entries: []*parser.LogEntry{
@@ -123,13 +113,11 @@ func TestAnalyzeFunnel(t *testing.T) {
 		},
 		{
 			name: "out_of_order_events",
-			config: &config.Config{
-				Funnel: config.Funnel{
-					Name: "test",
-					Steps: []config.Step{
-						{Name: "step1", EventPattern: "event1"},
-						{Name: "step2", EventPattern: "event2"},
-					},
+			config: &config.FunnelConfig{
+				Name: "test",
+				Steps: []config.Step{
+					{Name: "step1", EventPattern: "event1"},
+					{Name: "step2", EventPattern: "event2"},
 				},
 			},
 			entries: []*parser.LogEntry{
@@ -174,8 +162,8 @@ func TestAnalyzeFunnel(t *testing.T) {
 				t.Errorf("AnalyzeFunnel() DropOffs count = %v, want %v", len(result.DropOffs), tt.wantDropOffsCount)
 			}
 
-			if result.FunnelName != tt.config.Funnel.Name {
-				t.Errorf("AnalyzeFunnel() FunnelName = %v, want %v", result.FunnelName, tt.config.Funnel.Name)
+			if result.FunnelName != tt.config.Name {
+				t.Errorf("AnalyzeFunnel() FunnelName = %v, want %v", result.FunnelName, tt.config.Name)
 			}
 		})
 	}
@@ -301,7 +289,7 @@ func TestEventMatchesStep(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			analyzer := &FunnelAnalyzer{
-				config: &config.Config{},
+				config: &config.FunnelConfig{},
 			}
 
 			result := analyzer.eventMatchesStep(tt.entry, tt.step)
@@ -413,7 +401,7 @@ func TestEventMatchesStepWithRequiredProperties(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			analyzer := &FunnelAnalyzer{
-				config: &config.Config{},
+				config: &config.FunnelConfig{},
 			}
 
 			result := analyzer.eventMatchesStep(tt.entry, tt.step)
@@ -500,7 +488,7 @@ func TestCheckRequiredProperties(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			analyzer := &FunnelAnalyzer{
-				config: &config.Config{},
+				config: &config.FunnelConfig{},
 			}
 
 			result := analyzer.checkRequiredProperties(tt.eventData, tt.requiredProps)
@@ -512,14 +500,12 @@ func TestCheckRequiredProperties(t *testing.T) {
 }
 
 func TestDropOffCalculation(t *testing.T) {
-	cfg := &config.Config{
-		Funnel: config.Funnel{
-			Name: "test",
-			Steps: []config.Step{
-				{Name: "step1", EventPattern: "event1"},
-				{Name: "step2", EventPattern: "event2"},
-				{Name: "step3", EventPattern: "event3"},
-			},
+	cfg := &config.FunnelConfig{
+		Name: "test",
+		Steps: []config.Step{
+			{Name: "step1", EventPattern: "event1"},
+			{Name: "step2", EventPattern: "event2"},
+			{Name: "step3", EventPattern: "event3"},
 		},
 	}
 
@@ -551,13 +537,11 @@ func TestDropOffCalculation(t *testing.T) {
 }
 
 func TestPercentageCalculation(t *testing.T) {
-	cfg := &config.Config{
-		Funnel: config.Funnel{
-			Name: "test",
-			Steps: []config.Step{
-				{Name: "step1", EventPattern: "event1"},
-				{Name: "step2", EventPattern: "event2"},
-			},
+	cfg := &config.FunnelConfig{
+		Name: "test",
+		Steps: []config.Step{
+			{Name: "step1", EventPattern: "event1"},
+			{Name: "step2", EventPattern: "event2"},
 		},
 	}
 

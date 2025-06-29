@@ -1,0 +1,20 @@
+# Purchase flow funnel configuration
+# yaml-language-server: $schema=../schema/funnel-config.schema.json
+
+name: "Purchase Flow"
+
+steps:
+  - name: "Product View"
+    event_pattern: "page_view"
+#      required_properties:
+#        page: "/product"
+
+  - name: "Add to Cart"
+    event_pattern: "add_to_cart"
+#      required_properties:
+#        product_id: ".*"  # regex pattern
+
+  - name: "Purchase"
+    event_pattern: "purchase"
+#      required_properties:
+#        transaction_id: ".*"

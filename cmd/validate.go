@@ -11,44 +11,62 @@ import (
 
 var validateCmd = &cobra.Command{
 	Use:   "validate",
-	Short: "Validate funnel configuration file",
-	Long: `Validate command checks if the funnel configuration file is properly formatted
-and contains all required fields.
+	Short: "Validate configuration files",
+	Long: `Validate command checks if configuration files are properly formatted
+and contain all required fields.
 
-Example:
-  loglion validate --config funnel.yaml`,
-	Run: func(cmd *cobra.Command, args []string) {
-		configFile, _ := cmd.Flags().GetString("config")
+Examples:
+  loglion validate --parser-config parser.yaml
+  loglion validate --funnel-config funnel.yaml
+  loglion validate --parser-config parser.yaml --funnel-config funnel.yaml`,
+Run: func(cmd *cobra.Command, args []string) {
+		parserConfigFile, _ := cmd.Flags().GetString("parser-config")
+		funnelConfigFile, _ := cmd.Flags().GetString("funnel-config")
 
-		logrus.WithField("config_file", configFile).Info("Starting configuration validation")
-
-		fmt.Printf("Validating config file: %s\n", configFile)
-
-		// Load and validate configuration
-		logrus.Debug("Attempting to load and validate configuration")
-		cfg, err := config.LoadConfig(configFile)
-		if err != nil {
-			logrus.WithError(err).WithField("config_file", configFile).Error("Configuration validation failed")
-			fmt.Fprintf(os.Stderr, "❌ Configuration validation failed: %v\n", err)
+		if parserConfigFile == "" && funnelConfigFile == "" {
+			fmt.Fprintf(os.Stderr, "Error: At least one of --parser-config or --funnel-config must be specified.\n")
 			os.Exit(1)
 		}
 
-		logrus.WithFields(logrus.Fields{
-			"funnel_name": cfg.Funnel.Name,
-			"step_count":  len(cfg.Funnel.Steps),
-			"format":      cfg.Format,
-		}).Info("Configuration validation completed successfully")
+		logrus.Info("Starting configuration validation")
 
-		fmt.Printf("✅ Configuration is valid!\n")
-		fmt.Printf("Funnel: %s\n", cfg.Funnel.Name)
-		fmt.Printf("Format: %s\n", cfg.Format)
-		fmt.Printf("Steps: %d\n", len(cfg.Funnel.Steps))
+		// Validate parser config if specified
+		if parserConfigFile != "" {
+			fmt.Printf("Validating parser config file: %s\n", parserConfigFile)
+			logrus.Debug("Attempting to load and validate parser configuration")
+			parserCfg, err := config.LoadParserConfig(parserConfigFile)
+			if err != nil {
+				logrus.WithError(err).WithField("parser_config_file", parserConfigFile).Error("Parser configuration validation failed")
+				fmt.Fprintf(os.Stderr, "❌ Parser configuration validation failed: %v\n", err)
+				os.Exit(1)
+			}
+			fmt.Printf("✅ Parser configuration is valid!\n")
+			fmt.Printf("Event Regex: %s\n", parserCfg.EventRegex)
+			fmt.Printf("JSON Extraction: %t\n", parserCfg.JSONExtraction)
+		}
+
+		// Validate funnel config if specified
+		if funnelConfigFile != "" {
+			fmt.Printf("Validating funnel config file: %s\n", funnelConfigFile)
+			logrus.Debug("Attempting to load and validate funnel configuration")
+			funnelCfg, err := config.LoadFunnelConfig(funnelConfigFile)
+			if err != nil {
+				logrus.WithError(err).WithField("funnel_config_file", funnelConfigFile).Error("Funnel configuration validation failed")
+				fmt.Fprintf(os.Stderr, "❌ Funnel configuration validation failed: %v\n", err)
+				os.Exit(1)
+			}
+			fmt.Printf("✅ Funnel configuration is valid!\n")
+			fmt.Printf("Funnel: %s\n", funnelCfg.Name)
+			fmt.Printf("Steps: %d\n", len(funnelCfg.Steps))
+		}
+
+		logrus.Info("Configuration validation completed successfully")
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(validateCmd)
 
-	validateCmd.Flags().StringP("config", "c", "", "Path to funnel configuration file (required)")
-	validateCmd.MarkFlagRequired("config")
+	validateCmd.Flags().StringP("parser-config", "p", "", "Path to parser configuration file")
+	validateCmd.Flags().StringP("funnel-config", "f", "", "Path to funnel configuration file")
 }

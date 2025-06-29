@@ -1,0 +1,6 @@
+# Simple text log parser configuration
+# yaml-language-server: $schema=../schema/parser-config.schema.json
+
+# Minimal configuration - treats each line as an event
+event_regex: "^(.*)$"  # Entire line is the event data
+json_extraction: false # No JSON parsing needed
