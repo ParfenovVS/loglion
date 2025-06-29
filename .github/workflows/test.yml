@@ -21,7 +21,4 @@ jobs:
     
     - name: Run tests with coverage
       run: |
-        TEST_OUTPUT=$(go test -cover ./...)
-        echo "test-results<<EOF" >> $GITHUB_OUTPUT
-        echo "$TEST_OUTPUT" >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
+        go test -cover ./... | tee -a $GITHUB_OUTPUT
