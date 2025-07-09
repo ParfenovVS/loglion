@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 	"strconv"
@@ -214,9 +215,12 @@ func (p *PlainParser) ParseFile(filepath string) ([]*LogEntry, error) {
 		return nil, fmt.Errorf("failed to open file: %w", err)
 	}
 	defer file.Close()
+	return p.ParseReader(file)
+}
 
+func (p *PlainParser) ParseReader(reader io.Reader) ([]*LogEntry, error) {
 	var entries []*LogEntry
-	scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(reader)
 	lineCount := 0
 	parsedCount := 0
 	skippedCount := 0
@@ -243,16 +247,15 @@ func (p *PlainParser) ParseFile(filepath string) ([]*LogEntry, error) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		logrus.WithError(err).WithField("filepath", filepath).Error("Error reading log file")
-		return nil, fmt.Errorf("error reading file: %w", err)
+		logrus.WithError(err).Error("Error reading from reader")
+		return nil, fmt.Errorf("error reading from reader: %w", err)
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"filepath":       filepath,
 		"total_lines":    lineCount,
 		"parsed_entries": parsedCount,
 		"skipped_lines":  skippedCount,
-	}).Info("Log file parsing completed")
+	}).Info("Log parsing from reader completed")
 
 	return entries, nil
 }

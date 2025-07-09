@@ -117,6 +117,23 @@ func TestFunnelCommandE2E(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("funnel with stdin", func(t *testing.T) {
+		cmd := exec.Command("./loglion_test", "funnel", "-p", "sample/parsers/simple.yaml", "-f", "sample/funnels/basic.yaml")
+		cmd.Dir = "."
+		cmd.Stdin = strings.NewReader("login\naction\nlogout")
+
+		output, err := cmd.Output()
+		if err != nil {
+			t.Fatalf("Command failed: %v", err)
+		}
+
+		actual := string(output)
+		expected := "Funnel: Basic User Flow"
+		if !strings.Contains(actual, expected) {
+			t.Errorf("Expected output to contain %q, but it didn't. Output:\n%s", expected, actual)
+		}
+	})
 }
 
 func TestFunnelCommandErrorCasesE2E(t *testing.T) {
@@ -157,15 +174,6 @@ func TestFunnelCommandErrorCasesE2E(t *testing.T) {
 			},
 		},
 		{
-			name:       "funnel with missing log file",
-			args:       []string{"funnel", "--parser-config", "sample/parsers/simple.yaml", "--funnel-config", "sample/funnels/basic.yaml"},
-			shouldFail: true,
-			expectedErrMsg: []string{
-				"required flag(s)",
-				"log",
-			},
-		},
-		{
 			name:       "funnel with non-existent parser config",
 			args:       []string{"funnel", "--parser-config", "non-existent.yaml", "--funnel-config", "sample/funnels/basic.yaml", "--log", "sample/logs/simple.txt"},
 			shouldFail: true,
@@ -188,8 +196,7 @@ func TestFunnelCommandErrorCasesE2E(t *testing.T) {
 			args:       []string{"funnel", "--parser-config", "sample/parsers/simple.yaml", "--funnel-config", "sample/funnels/basic.yaml", "--log", "non-existent.txt"},
 			shouldFail: true,
 			expectedErrMsg: []string{
-				"Error parsing log file:",
-				"non-existent.txt",
+				"Error parsing log file: open non-existent.txt: no such file or directory",
 			},
 		},
 		{

@@ -45,7 +45,7 @@ func TestFunnelCommandFlags(t *testing.T) {
 		if logFlag.Shorthand != "l" {
 			t.Errorf("Expected log shorthand to be 'l', got %q", logFlag.Shorthand)
 		}
-		if logFlag.Usage != "Path to log file (required)" {
+		if logFlag.Usage != "Path to log file (optional, stdin is used if not provided)" {
 			t.Errorf("Expected log usage description mismatch")
 		}
 	}
@@ -112,7 +112,7 @@ func TestFunnelCommandRequiredFlags(t *testing.T) {
 	cmd := funnelCmd
 
 	// Check if required flags are marked as required
-	requiredFlags := []string{"parser-config", "funnel-config", "log"}
+	requiredFlags := []string{"parser-config", "funnel-config"}
 	
 	for _, flagName := range requiredFlags {
 		flag := cmd.Flags().Lookup(flagName)

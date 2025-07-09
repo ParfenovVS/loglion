@@ -52,11 +52,6 @@ logout user123`
 			expectError: true,
 		},
 		{
-			name:        "missing_log_file",
-			args:        []string{"count", "--parser-config", parserPath, "login"},
-			expectError: true,
-		},
-		{
 			name:        "nonexistent_parser_config",
 			args:        []string{"count", "--parser-config", "nonexistent.yaml", "--log", logPath, "login"},
 			expectError: true,
@@ -107,7 +102,7 @@ func TestCountCommandFlags(t *testing.T) {
 		if logFlag.Shorthand != "l" {
 			t.Errorf("Expected log shorthand to be 'l', got %q", logFlag.Shorthand)
 		}
-		if logFlag.Usage != "Path to log file (required)" {
+		if logFlag.Usage != "Path to log file (optional, stdin is used if not provided)" {
 			t.Errorf("Expected log usage description mismatch")
 		}
 	}
@@ -160,12 +155,6 @@ func TestCountCommandRequiredFlags(t *testing.T) {
 	required := cmd.Flag("parser-config").Annotations[cobra.BashCompOneRequiredFlag]
 	if len(required) == 0 {
 		t.Error("Expected parser-config flag to be marked as required")
-	}
-
-	// Test that log is marked as required
-	required = cmd.Flag("log").Annotations[cobra.BashCompOneRequiredFlag]
-	if len(required) == 0 {
-		t.Error("Expected log flag to be marked as required")
 	}
 }
 
@@ -283,17 +272,15 @@ Examples:
 				return fmt.Errorf("parser-config is required")
 			}
 
-			if logFile == "" {
-				return fmt.Errorf("log is required")
-			}
-
 			// Check if files exist
 			if _, err := os.Stat(parserConfigFile); os.IsNotExist(err) {
 				return fmt.Errorf("parser config file does not exist")
 			}
 
-			if _, err := os.Stat(logFile); os.IsNotExist(err) {
-				return fmt.Errorf("log file does not exist")
+			if logFile != "" {
+				if _, err := os.Stat(logFile); os.IsNotExist(err) {
+					return fmt.Errorf("log file does not exist")
+				}
 			}
 
 			// Simple validation of parser config
@@ -311,11 +298,10 @@ Examples:
 	}
 
 	cmd.Flags().StringP("parser-config", "p", "", "Path to parser configuration file (required)")
-	cmd.Flags().StringP("log", "l", "", "Path to log file (required)")
+	cmd.Flags().StringP("log", "l", "", "Path to log file (optional, stdin is used if not provided)")
 	cmd.Flags().StringP("output", "o", "text", "Output format (json, text)")
 
 	cmd.MarkFlagRequired("parser-config")
-	cmd.MarkFlagRequired("log")
 
 	return cmd
 }

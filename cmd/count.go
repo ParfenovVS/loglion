@@ -62,13 +62,27 @@ Examples:
 		}
 
 		// Parse log file
-		logrus.WithField("log_file", logFile).Debug("Starting log file parsing")
-		entries, err := logParser.ParseFile(logFile)
-		if err != nil {
-			logrus.WithError(err).WithField("log_file", logFile).Error("Failed to parse log file")
-			fmt.Fprintf(os.Stderr, "Error parsing log file: %v\n", err)
-			os.Exit(1)
-		}
+        logrus.WithField("log_file", logFile).Debug("Starting log file parsing")
+
+        var entries []*parser.LogEntry
+        var parseErr error
+
+        if logFile != "" {
+            _, err := os.Stat(logFile)
+            if os.IsNotExist(err) {
+                fmt.Fprintf(os.Stderr, "Error parsing log file: open %s: no such file or directory\n", logFile)
+                os.Exit(1)
+            }
+            entries, parseErr = logParser.ParseFile(logFile)
+        } else {
+            entries, parseErr = logParser.ParseReader(os.Stdin)
+        }
+
+        if parseErr != nil {
+            logrus.WithError(parseErr).WithField("log_file", logFile).Error("Failed to parse log file")
+            fmt.Fprintf(os.Stderr, "Error parsing log file: %v\n", parseErr)
+            os.Exit(1)
+        }
 
 		logrus.Debug("Starting count analysis")
 		result := countAnalyzer.AnalyzeCount(entries)
@@ -100,9 +114,8 @@ func init() {
 	rootCmd.AddCommand(countCmd)
 
 	countCmd.Flags().StringP("parser-config", "p", "", "Path to parser configuration file (required)")
-	countCmd.Flags().StringP("log", "l", "", "Path to log file (required)")
+	countCmd.Flags().StringP("log", "l", "", "Path to log file (optional, stdin is used if not provided)")
 	countCmd.Flags().StringP("output", "o", "text", "Output format (json, text)")
 
 	countCmd.MarkFlagRequired("parser-config")
-	countCmd.MarkFlagRequired("log")
 }

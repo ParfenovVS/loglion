@@ -88,29 +88,46 @@ func TestCountCommandE2E(t *testing.T) {
 				"Pattern Counts:",
 				"login:",
 				"purchase:",
-				"logout:",
-			},
-		},
-	}
+                "logout:",
+            },
+        },
+    }
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			cmd := exec.Command("./loglion_test", tt.args...)
-			cmd.Dir = "."
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            cmd := exec.Command("./loglion_test", tt.args...)
+            cmd.Dir = "."
 
-			output, err := cmd.Output()
-			if err != nil {
-				t.Fatalf("Command failed: %v", err)
-			}
+            output, err := cmd.Output()
+            if err != nil {
+                t.Fatalf("Command failed: %v", err)
+            }
 
-			actual := string(output)
-			for _, expected := range tt.expected {
-				if !strings.Contains(actual, expected) {
-					t.Errorf("Expected output to contain %q, but it didn't. Output:\n%s", expected, actual)
-				}
-			}
-		})
-	}
+            actual := string(output)
+            for _, expected := range tt.expected {
+                if !strings.Contains(actual, expected) {
+                    t.Errorf("Expected output to contain %q, but it didn't. Output:\n%s", expected, actual)
+                }
+            }
+        })
+    }
+
+	t.Run("count with stdin", func(t *testing.T) {
+		cmd := exec.Command("./loglion_test", "count", "-p", "sample/parsers/simple.yaml", "login")
+		cmd.Dir = "."
+		cmd.Stdin = strings.NewReader("login\nlogout\nlogin")
+
+		output, err := cmd.Output()
+		if err != nil {
+			t.Fatalf("Command failed: %v", err)
+		}
+
+		actual := string(output)
+		expected := "login: 2"
+		if !strings.Contains(actual, expected) {
+			t.Errorf("Expected output to contain %q, but it didn't. Output:\n%s", expected, actual)
+		}
+	})
 }
 
 func TestCountCommandErrorCasesE2E(t *testing.T) {
@@ -150,15 +167,6 @@ func TestCountCommandErrorCasesE2E(t *testing.T) {
 			},
 		},
 		{
-			name:       "count with missing log file",
-			args:       []string{"count", "--parser-config", "sample/parsers/simple.yaml", "login"},
-			shouldFail: true,
-			expectedErrMsg: []string{
-				"required flag(s)",
-				"log",
-			},
-		},
-		{
 			name:       "count with non-existent parser config",
 			args:       []string{"count", "--parser-config", "non-existent.yaml", "--log", "sample/logs/simple.txt", "login"},
 			shouldFail: true,
@@ -172,8 +180,7 @@ func TestCountCommandErrorCasesE2E(t *testing.T) {
 			args:       []string{"count", "--parser-config", "sample/parsers/simple.yaml", "--log", "non-existent.txt", "login"},
 			shouldFail: true,
 			expectedErrMsg: []string{
-				"Error parsing log file:",
-				"non-existent.txt",
+				"Error parsing log file: open non-existent.txt: no such file or directory",
 			},
 		},
 		{

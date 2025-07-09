@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"io"
 	"time"
 )
 
@@ -17,6 +18,7 @@ type LogEntry struct {
 type Parser interface {
 	Parse(logLine string) (*LogEntry, error)
 	ParseFile(filepath string) ([]*LogEntry, error)
+	ParseReader(reader io.Reader) ([]*LogEntry, error)
 }
 
 func NewParser() Parser {
